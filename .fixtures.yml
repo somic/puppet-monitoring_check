@@ -1,0 +1,7 @@
+fixtures:
+  symlinks:
+    monitoring_check: "#{source_dir}"
+    stdlib: "#{source_dir}/../../vendor/modules/stdlib/"
+    sensu: "#{source_dir}/../../vendor/modules/sensu/"
+    sudo: "#{source_dir}/../../vendor/modules/sudo/"
+
