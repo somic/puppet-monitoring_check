@@ -1,7 +1,13 @@
 fixtures:
+  repositories:
+    stdlib:
+      repo: 'git@sysgit.yelpcorp.com:mirrors/fhats/puppetlabs-stdlib.git'
+      ref:  'origin/410_add_convert_base'
+    sudo:
+      repo: 'git@sysgit.yelpcorp.com:mirrors/solarkennedy/puppet-sudo.git'
+      ref:  'origin/package_ensure'
+    sensu:
+      repo: 'git@sysgit.yelpcorp.com:mirrors/notanisp/sensu-puppet.git'
+      ref:  'b566b13399d30b2ee8485d1abd12d1a708728003'
   symlinks:
     monitoring_check: "#{source_dir}"
-    stdlib: "#{source_dir}/../../vendor/modules/stdlib/"
-    sensu: "#{source_dir}/../../vendor/modules/sensu/"
-    sudo: "#{source_dir}/../../vendor/modules/sudo/"
-
