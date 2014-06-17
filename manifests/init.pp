@@ -142,19 +142,20 @@ define monitoring_check (
   if str2bool($needs_sudo) {
     $real_command = "sudo -H -u ${sudo_user} -- ${command}"
     $cmd = regsubst($command, '^(\S+).*','\1') # Strip the options off, leaving just the check script
-    sudo::conf { "sensu_${title}":
-      priority => 10,
-      content  => "sensu       ALL=(${sudo_user}) NOPASSWD: ${cmd}\nDefaults!${cmd} !requiretty",
+    if str2bool($use_sensu) {
+      sudo::conf { "sensu_${title}":
+        priority => 10,
+        content  => "sensu       ALL=(${sudo_user}) NOPASSWD: ${cmd}\nDefaults!${cmd} !requiretty",
+      } ->
+      Sensu::Check[$name]
     }
-    # Cant assume we are using sensu at this stage
-    #->
-    #Sensu::Check[$name]
 
     if str2bool($use_consul) {
       sudo::conf { "consul_${title}":
         priority => 10,
         content  => "consul      ALL=(${sudo_user}) NOPASSWD: ${cmd}\nDefaults!${cmd} !requiretty",
-      }
+      } ->
+      Consul::Check[$name]
     }
   }
   else {
