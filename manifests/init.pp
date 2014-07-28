@@ -102,7 +102,7 @@ define monitoring_check (
     $team                  = 'operations',
     $ensure                = 'present',
     $dependencies          = [],
-    $use_sensu             = pick($profile::sensu_client::enable, true),
+    $use_sensu             = pick($profile_sensu::enable, true),
     $use_consul            = pick($profile_consul::enable, false),
     $use_nagios            = false,
     $nagios_custom         = {},
