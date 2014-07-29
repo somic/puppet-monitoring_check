@@ -63,6 +63,13 @@
 # Use false if you want the alert to never send emails.
 # It *can* take a comma separated list as an argument like a normal email mailto.
 #
+# [*ticket*]
+# Boolean. Determines if the JIRA handler is executed or not. Defaults to false.
+#
+# [*project*]
+# Optionally set the JIRA project for a check. Otherwise if, if ticket=>true, then
+# it will use the project set for the team.
+#
 # [*dependencies*]
 # A list of dependencies for this check to be escalated if it's critical.
 # If any of these dependencies are critical then the check will not be escalated
@@ -100,6 +107,8 @@ define monitoring_check (
     $realert_every         = '1',
     $irc_channels          = undef,
     $notification_email    = 'undef',
+    $ticket                = false,
+    $project               = false,
     $tip                   = false,
     $page                  = false,
     $needs_sudo            = false,
@@ -128,6 +137,8 @@ define monitoring_check (
   validate_string($team)
   $team_names = join(keys(hiera('monitoring::teams')), '|')
   validate_re($team, "^(${team_names})$")
+  validate_bool($ticket)
+
   validate_bool($aggregate)
   # Make $handle be the inverse of aggregate.
   # If we are aggregate, we do not handle them.
@@ -190,6 +201,8 @@ define monitoring_check (
         team                  => $team,
         irc_channels          => $irc_channel_array,
         notification_email    => $notification_email,
+        ticket                => $ticket,
+        project               => $project,
         page                  => str2bool($page),
         tip                   => $tip,
       }, $sensu_custom)

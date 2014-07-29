@@ -15,7 +15,7 @@ describe 'monitoring_check' do
         .with_handlers('default') \
         .with_interval(default_interval) \
         .with_command('bar') \
-        .with_custom({ "dependencies"=>[], "runbook"=>"http://gronk", "irc_channels"=>:undef, "realert_every"=>"1", "alert_after"=>"0", "tip"=>false, "page"=>true, "team"=>"operations", "notification_email"=>:undef })
+        .with_custom({ "dependencies"=>[], "ticket"=>false, "project"=>false, "runbook"=>"http://gronk", "irc_channels"=>:undef, "realert_every"=>"1", "alert_after"=>"0", "tip"=>false, "page"=>true, "team"=>"operations", "notification_email"=>:undef })
     end
   end
   context "bad runbook (not a uri)" do
@@ -26,7 +26,7 @@ describe 'monitoring_check' do
   end
   context "custom team" do
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :team => 'other'} }
-    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>[], "runbook"=>"http://gronk", "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "realert_every"=>"1", "team"=>"other", "notification_email"=>:undef }) }
+    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>[], "runbook"=>"http://gronk", "ticket"=>false, "project"=>false, "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "realert_every"=>"1", "team"=>"other", "notification_email"=>:undef }) }
   end
   context "custom team (nonexistent)" do
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :team => 'doesnotexist'} }
@@ -36,24 +36,24 @@ describe 'monitoring_check' do
   end
   context "with one dependency" do
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :dependencies => 'dep1'} }
-    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>["dep1"], "runbook"=>"http://gronk", "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "realert_every"=>"1", "team"=>"operations" , "notification_email"=>:undef }) }
+    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>["dep1"], "runbook"=>"http://gronk", "ticket"=>false, "project"=>false, "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "realert_every"=>"1", "team"=>"operations" , "notification_email"=>:undef }) }
   end
   context "with two dependency" do
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :dependencies => ['dep1', 'dep2']} }
-    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>["dep1", "dep2"], "runbook"=>"http://gronk", "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "realert_every"=>"1", "team"=>"operations", "notification_email"=>:undef }) }
+    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>["dep1", "dep2"], "runbook"=>"http://gronk", "ticket"=>false, "project"=>false, "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "realert_every"=>"1", "team"=>"operations", "notification_email"=>:undef }) }
   end
 
   context "with custom" do
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :sensu_custom => { 'foo' => 'bar' } } }
-    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>[], "runbook"=>"http://gronk", "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "foo"=>"bar", "realert_every"=>"1", "team"=>"operations", "notification_email"=>:undef }) }
+    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>[], "runbook"=>"http://gronk", "ticket"=>false, "project"=>false, "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "foo"=>"bar", "realert_every"=>"1", "team"=>"operations", "notification_email"=>:undef }) }
   end
   context "with custom - overriding" do
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :sensu_custom => { 'team' => 'overridden' } } }
-    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>[], "runbook"=>"http://gronk", "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "realert_every"=>"1","team"=>"overridden", "notification_email"=>:undef })}
+    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>[], "runbook"=>"http://gronk", "ticket"=>false, "project"=>false, "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "realert_every"=>"1","team"=>"overridden", "notification_email"=>:undef })}
   end
   context "nowake, nopage" do
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => 'false'} }
-    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>[], "runbook"=>"http://gronk", "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "realert_every"=>"1", "team"=>"operations", "notification_email"=>:undef }) }
+    it { should contain_sensu__check('examplecheck').with_custom({"dependencies"=>[], "runbook"=>"http://gronk", "ticket"=>false, "project"=>false, "irc_channels"=>:undef, "alert_after"=>"0", "tip"=>false, "page"=>false, "realert_every"=>"1", "team"=>"operations", "notification_email"=>:undef }) }
   end
 
   context "sudo" do
