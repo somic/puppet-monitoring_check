@@ -90,9 +90,9 @@
 define monitoring_check (
     $command,
     $runbook,
-    $check_every           = '5m',
+    $check_every           = '1m',
     $alert_after           = '0s',
-    $realert_every         = '1',
+    $realert_every         = '-1',
     $irc_channels          = undef,
     $notification_email    = 'undef',
     $tip                   = false,
