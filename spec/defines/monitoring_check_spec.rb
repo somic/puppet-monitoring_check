@@ -65,6 +65,18 @@ describe 'monitoring_check' do
         .with_content("sensu       ALL=(fred) NOPASSWD: /bin/bar\nDefaults!/bin/bar !requiretty")
     end
   end
+
+  context "Aggregate Checks" do
+    let(:params) { {:aggregate => true, :command => 'bar', :runbook => 'y/gronk'} }
+    it { should contain_sensu__check('examplecheck').with_handle(false) }
+    it { should contain_sensu__check('examplecheck').with_aggregate(true) }
+  end
+  context "Non Aggregate Checks" do
+    let(:params) { { :command => 'bar', :runbook => 'y/gronk'} }
+    it { should contain_sensu__check('examplecheck').with_handle(true) }
+    it { should contain_sensu__check('examplecheck').with_aggregate(false) }
+  end
+
 end
 
 
