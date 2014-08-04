@@ -6,7 +6,6 @@ describe 'human_time_to_seconds' do
   before(:each) do
     Puppet::Parser::Functions.function(:human_time_to_seconds)
   end
-  pending("rspec-puppet autoloading bug: https://github.com/rodjek/rspec-puppet/issues/44") do
 
   it { should run.with_params('30').and_return('30') }
   it { should run.with_params('30s').and_return('30') }
@@ -39,7 +38,6 @@ describe 'human_time_to_seconds' do
     expect { subject.call([ [' 3s'] ]) }.to raise_error(Puppet::ParseError)
   end
 
-  end
 
 end
 

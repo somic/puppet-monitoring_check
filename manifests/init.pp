@@ -4,6 +4,7 @@
 # less bolierplate and yelp specific runbook functionality.
 #
 # === Parameters
+#
 # [*ensure*]
 # present or absent, defaults to present
 #
@@ -15,11 +16,6 @@
 #
 # [*sudo_user*]
 # The user to sudo to (if needs_sudo is true). Defaults to root
-#
-# [*runbook*]
-# The URI to the google doc runbook for this check
-# Should be of the form: y/my_runbook_name (preferred), or
-# http://...some.uri
 #
 # [*check_every*]
 # How often to run this check. Can be an integer number of seconds, or an
@@ -37,10 +33,22 @@
 # This logic only occurs after the alert_after time has expired.
 # Defaults to 1, meaning sensu will notify every time the check runs.
 #
+# [*runbook*]
+# The URI to the google doc runbook for this check
+# Should be of the form: y/my_runbook_name (preferred), or
+# http://...some.uri
+#
 # [*tip*]
 # A quick tip for how to respond to / clear the alert without having to read the
 # runbook. Optional (and custom checks are recommended to put the tip into the
 # check output).
+#
+# [*sla*]
+#  Allows you to define the SLA for the service you are monitoring. Notice
+#  it is lower case!
+#  
+#  This is (currently) just a human readable string to give more context
+#  about the urgency of an alert when you see it in a ticket/page/email/irc.
 #
 # [*team*]
 # The team responsible for this check (i.e. which team's pagerduty to escalate to)
@@ -110,6 +118,7 @@ define monitoring_check (
     $ticket                = false,
     $project               = false,
     $tip                   = false,
+    $sla                   = 'No SLA defined.',
     $page                  = false,
     $needs_sudo            = false,
     $sudo_user             = 'root',
@@ -194,9 +203,10 @@ define monitoring_check (
       handle              => $handle,
       aggregate           => $aggregate,
       custom              => merge({
-        alert_after          => $alert_after_s,
-        realert_every        => $realert_every,
+        alert_after           => $alert_after_s,
+        realert_every         => $realert_every,
         runbook               => $runbook,
+        sla                   => $sla,
         dependencies          => any2array($dependencies),
         team                  => $team,
         irc_channels          => $irc_channel_array,
