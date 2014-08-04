@@ -5,7 +5,7 @@ describe 'monitoring_check' do
   let(:hiera_data) { { :sensu_enabled => true, :'monitoring::teams' => { 'operations' => {}, 'other' => {}} } }
   let(:facts) { { :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu' } }
 
-  let(:default_interval) { 5*60 }
+  let(:default_interval) { 60 }
 
   context "basic test" do
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => true} }
@@ -15,7 +15,8 @@ describe 'monitoring_check' do
         .with_handlers('default') \
         .with_interval(default_interval) \
         .with_command('bar') \
-        .with_custom({"runbook"=>"http://gronk",
+        .with_custom({
+          "runbook"=>"http://gronk",
           "dependencies"=>[],
           "ticket"=>false,
           "irc_channels"=>:undef,
@@ -23,7 +24,7 @@ describe 'monitoring_check' do
           "project"=>false,
           "alert_after"=>"0",
           "page"=>true,
-          "realert_every"=>"1",
+          "realert_every"=>"-1",
           "sla"=>"No SLA defined.",
           "team"=>"operations",
           "notification_email"=>"undef"
@@ -49,7 +50,7 @@ describe 'monitoring_check' do
       "project"=>false,
       "alert_after"=>"0",
       "page"=>false,
-      "realert_every"=>"1",
+      "realert_every"=>"-1",
       "sla"=>"No SLA defined.",
       "team"=>"other",
       "notification_email"=>"undef"})
@@ -72,7 +73,7 @@ describe 'monitoring_check' do
       "project"=>false,
       "alert_after"=>"0",
       "page"=>false,
-      "realert_every"=>"1",
+      "realert_every"=>"-1",
       "sla"=>"No SLA defined.",
       "team"=>"operations",
       "notification_email"=>"undef"})
@@ -90,7 +91,7 @@ describe 'monitoring_check' do
       "project"=>false,
       "alert_after"=>"0",
       "page"=>false,
-      "realert_every"=>"1",
+      "realert_every"=>"-1",
       "sla"=>"No SLA defined.",
       "team"=>"operations",
       "notification_email"=>"undef"
@@ -109,7 +110,7 @@ describe 'monitoring_check' do
         "alert_after"=>"0",
         "foo"=>"bar",
         "page"=>false,
-        "realert_every"=>"1",
+        "realert_every"=>"-1",
         "sla"=>"No SLA defined.",
         "team"=>"operations",
         "notification_email"=>"undef"
@@ -128,7 +129,7 @@ describe 'monitoring_check' do
         "project"=>false,
         "alert_after"=>"0",
         "page"=>false,
-        "realert_every"=>"1",
+        "realert_every"=>"-1",
         "sla"=>"No SLA defined.",
         "team"=>"overridden",
         "notification_email"=>"undef"
@@ -147,7 +148,7 @@ describe 'monitoring_check' do
         "project"=>false,
         "alert_after"=>"0",
         "page"=>false,
-        "realert_every"=>"1",
+        "realert_every"=>"-1",
         "sla"=>"No SLA defined.",
         "team"=>"operations",
         "notification_email"=>"undef"
@@ -166,7 +167,7 @@ describe 'monitoring_check' do
         "project"=>false,
         "alert_after"=>"0",
         "page"=>false,
-        "realert_every"=>"1",
+        "realert_every"=>"-1",
         "sla"=>"custom SLA",
         "team"=>"operations",
         "notification_email"=>"undef"
