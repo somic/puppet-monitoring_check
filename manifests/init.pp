@@ -32,6 +32,7 @@
 # For example, 10, would mean only re-notify every 10 fails.
 # This logic only occurs after the alert_after time has expired.
 # Defaults to 1, meaning sensu will notify every time the check runs.
+# Use -1 for exponential backoff.
 #
 # [*runbook*]
 # The URI to the google doc runbook for this check
