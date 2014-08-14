@@ -5,7 +5,7 @@
 `monitoring_check` is a puppet module to create Sensu checks.
 
 These are special Sensu checks, that are designed to operate with the 
-Yelp sensu\_handlers, for multi-team environments.
+Yelp `sensu_handlers`, for multi-team environments.
 
 The `monitoring_check` definition allows applications to define their behavior,
 including how noisy they are, which teams get notified, and how.
@@ -38,7 +38,7 @@ check can declare arbitrary key-value pairs in its event data.
 Then, the special handlers can pick up these key-values and make decisions based
 on them. 
 
-For example, `monitoring\_check` can set a `notification\_email` entry, and
+For example, `monitoring_check` can set a `notification_email` entry, and
 the Yelp email handler can pick up on this entry and send emails specifically
 to the specified email address. 
 
@@ -55,5 +55,5 @@ Open an [issue](https://github.com/Yelp/puppet-monitoring_check/issues) or
 [fork](https://github.com/Yelp/puppet-monitoring_check/fork) and open a 
 [Pull Request](https://github.com/Yelp/puppet-monitoring_check/pulls)
 
-Please do not attempt to use `monitoring\_check` without Yelp's `sensu\_handlers`
+Please do not attempt to use `monitoring_check` without Yelp's `sensu_handlers`
 unless you intend to write your own custom handlers.
