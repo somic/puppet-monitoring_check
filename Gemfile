@@ -13,6 +13,6 @@ gem 'puppet', ENV['PUPPET_VERSION'] || '~> 3.6.0'
 gem 'vagrant-wrapper'
 
 gem 'hiera-puppet-helper',
-  :git => 'git@github.com:bobtfish/hiera-puppet-helper.git',
+  :git => 'https://github.com/bobtfish/hiera-puppet-helper.git',
   :ref => '5ed989a130bc62cc6bdb923596586284f0bd73df'
 
