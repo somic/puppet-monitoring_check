@@ -1,5 +1,5 @@
 GIT
-  remote: git@github.com:bobtfish/hiera-puppet-helper.git
+  remote: https://github.com/bobtfish/hiera-puppet-helper.git
   revision: 5ed989a130bc62cc6bdb923596586284f0bd73df
   ref: 5ed989a130bc62cc6bdb923596586284f0bd73df
   specs:
