@@ -126,7 +126,6 @@ define monitoring_check (
     $ensure                = 'present',
     $dependencies          = [],
     $use_sensu             = pick($profile_sensu::enable, true),
-    $use_consul            = pick($profile_consul::enable, false),
     $use_nagios            = false,
     $nagios_custom         = {},
     $low_flap_threshold    = undef,
@@ -179,14 +178,6 @@ define monitoring_check (
       } ->
       Sensu::Check[$name]
     }
-
-    if str2bool($use_consul) {
-      sudo::conf { "consul_${title}":
-        priority => 10,
-        content  => "consul      ALL=(${sudo_user}) NOPASSWD: ${cmd}\nDefaults!${cmd} !requiretty",
-      } ->
-      Consul::Check[$name]
-    }
   }
   else {
     $real_command = $command
@@ -216,13 +207,6 @@ define monitoring_check (
         page                  => str2bool($page),
         tip                   => $tip,
       }, $sensu_custom)
-    }
-  }
-  if str2bool($use_consul) {
-    consul::check { $name:
-      script   => $real_command,
-      interval => "${interval_s}s",
-      notes    => "Runbook: ${runbook}. Tip: ${tip}", # "
     }
   }
   if str2bool($use_nagios) {
