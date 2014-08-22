@@ -24,6 +24,7 @@ describe 'monitoring_check' do
           "project"=>false,
           "alert_after"=>"0",
           "page"=>true,
+          "annotation"=>"annotation:1",
           "realert_every"=>"-1",
           "sla"=>"No SLA defined.",
           "team"=>"operations",
@@ -53,6 +54,7 @@ describe 'monitoring_check' do
       "realert_every"=>"-1",
       "sla"=>"No SLA defined.",
       "team"=>"other",
+      "annotation"=>"annotation:1",
       "notification_email"=>"undef"})
     }
   end
@@ -65,7 +67,8 @@ describe 'monitoring_check' do
   end
   context "with one dependency" do
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :dependencies => 'dep1'} }
-    it { should contain_sensu__check('examplecheck').with_custom({"runbook"=>"http://gronk",
+    it { should contain_sensu__check('examplecheck').with_custom({
+      "runbook"=>"http://gronk",
       "dependencies"=>["dep1"],
       "ticket"=>false,
       "irc_channels"=>:undef,
@@ -76,7 +79,8 @@ describe 'monitoring_check' do
       "realert_every"=>"-1",
       "sla"=>"No SLA defined.",
       "team"=>"operations",
-      "notification_email"=>"undef"})
+      "notification_email"=>"undef",
+      "annotation"=>"annotation:1"})
     }
   end
 
@@ -94,7 +98,8 @@ describe 'monitoring_check' do
       "realert_every"=>"-1",
       "sla"=>"No SLA defined.",
       "team"=>"operations",
-      "notification_email"=>"undef"
+      "notification_email"=>"undef",
+      "annotation"=>"annotation:1"
     })}
   end
 
@@ -113,7 +118,8 @@ describe 'monitoring_check' do
         "realert_every"=>"-1",
         "sla"=>"No SLA defined.",
         "team"=>"operations",
-        "notification_email"=>"undef"
+        "notification_email"=>"undef",
+        "annotation"=>"annotation:1"
       }
     )}
   end
@@ -132,7 +138,8 @@ describe 'monitoring_check' do
         "realert_every"=>"-1",
         "sla"=>"No SLA defined.",
         "team"=>"overridden",
-        "notification_email"=>"undef"
+        "notification_email"=>"undef",
+        "annotation"=>"annotation:1"
       }
     )}
   end
@@ -151,6 +158,7 @@ describe 'monitoring_check' do
         "realert_every"=>"-1",
         "sla"=>"No SLA defined.",
         "team"=>"operations",
+        "annotation"=>"annotation:1",
         "notification_email"=>"undef"
       }
     )}
@@ -170,6 +178,7 @@ describe 'monitoring_check' do
         "realert_every"=>"-1",
         "sla"=>"custom SLA",
         "team"=>"operations",
+        "annotation"=>"annotation:1",
         "notification_email"=>"undef"
       }
     )}

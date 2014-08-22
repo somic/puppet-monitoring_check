@@ -43,6 +43,11 @@
 # runbook. Optional (and custom checks are recommended to put the tip into the
 # check output).
 #
+# [*annotation*]
+# The line of code that should be referenced as the "originator" for this
+# monitoring check.  Obviously there is an entire call stack to choose from.
+# Try to use the most relevant/helpful value here.
+#
 # [*sla*]
 #  Allows you to define the SLA for the service you are monitoring. Notice
 #  it is lower case!
@@ -110,6 +115,7 @@
 define monitoring_check (
     $command,
     $runbook,
+    $annotation            = annotate(),
     $check_every           = '1m',
     $alert_after           = '0s',
     $realert_every         = '-1',
@@ -197,6 +203,7 @@ define monitoring_check (
         alert_after           => $alert_after_s,
         realert_every         => $realert_every,
         runbook               => $runbook,
+        annotation            => $annotation,
         sla                   => $sla,
         dependencies          => any2array($dependencies),
         team                  => $team,
