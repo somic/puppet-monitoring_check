@@ -193,6 +193,10 @@ describe 'monitoring_check' do
         .with_content("sensu       ALL=(fred) NOPASSWD: /bin/bar\nDefaults!/bin/bar !requiretty")
     end
   end
+  context "sudo with a non qualified command" do
+    let(:params) { {:command => 'bar --foo --baz', :runbook => 'http://gronk', :needs_sudo => true, :sudo_user => 'fred'} }
+    it { expect { should compile }.to raise_error() }
+  end
 
   context "Aggregate Checks" do
     let(:params) { {:aggregate => true, :command => 'bar', :runbook => 'y/gronk'} }
@@ -204,6 +208,7 @@ describe 'monitoring_check' do
     it { should contain_sensu__check('examplecheck').with_handle(true) }
     it { should contain_sensu__check('examplecheck').with_aggregate(false) }
   end
+
 
 end
 
