@@ -12,11 +12,23 @@ require 'sensu/redis'
 require 'sensu-plugin/check/cli'
 
 class CheckCluster < Sensu::Plugin::Check::CLI
+  option :cluster_name
+    :short => "-N NAME",
+    :long => "--cluster-name NAME",
+    :description => "Cluster name to prefix occurrences",
+    :required => true
+
   option :server_config,
     :short => "-S FILE",
     :long => "--server-config FILE",
     :description => "Sensu server config file",
     :default => "/etc/sensu/config.json"
+
+  option :server_config_dir,
+    :short => "-D DIR",
+    :long => "--server-config-dir DIR",
+    :description => "Sensu server config directory",
+    :default => "/etc/sensu/conf.d"
 
   option :lock_timeout,
     :short => "-L SECONDS",
@@ -108,15 +120,16 @@ class CheckCluster < Sensu::Plugin::Check::CLI
   end
 
   def check_aggregate
-    binding.pry
     # TODO: do not hardcode this?
     args = ARGV.join(' ').
              gsub(/(-S|--server-config)\s*[^\s]+/, '').
-             gsub(/(-L|--lock-timeout)\s*[^\s]+/, '')
+             gsub(/(-L|--lock-timeout)\s*[^\s]+/, '').
+             gsub(/(-D|--server-config-dir)\s*[^\s]+/, '').
+             gsub(/(-N|--cluster-name)\s*[^\s]+/, '')
     cmd = "/usr/share/sensu-community-plugins/plugins/sensu/check-aggregate.rb #{args}"
-    out = `#{cmd}`
-    res = $?
-    return res, out
+    output = `#{cmd}`
+    result = $?.exitstatus
+    return result, output
   end
 
 private
@@ -150,7 +163,10 @@ private
   end
 
   def sensu_settings
-    @sensu_settings ||= Sensu::Settings.get(:config_file => config[:server_config])
+    @sensu_settings ||=
+      Sensu::Settings.get(
+        :config_file => config[:server_config],
+        :config_dirs => [config[:server_config_dir]])
   end
 
   def setup_transport
@@ -159,11 +175,18 @@ private
     @transport = Transport.connect(transport_name, transport_settings)
   end
 
-  def send_payload
-    payload = config.dup
+  def send_payload(status, output)
+    binding.pry
+    payload = {
+      :client => sensu_settings[:client],
+      :occurrences => 1,
+      :action => :create,
+      :check  => sensu_settings[:checks][config[:check]].merge(
+        :status => status,
+        :output => output,
+        :source => "cluster_#{config[:check]}")
+    }
 
-    if sensu_settings.check_exists?(config[:name])
-      payload.merge!(sensu_settings[:checks][config[:name]])
-    end
+    puts "sending: #{payload.inspect}"
   end
 end
