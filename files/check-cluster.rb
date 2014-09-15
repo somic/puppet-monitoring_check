@@ -4,15 +4,15 @@
 #
 
 require 'rubygems'
-require 'pry'
 require 'sensu'
 require 'sensu/settings'
 require 'sensu/transport'
 require 'sensu/redis'
 require 'sensu-plugin/check/cli'
+require 'json'
 
 class CheckCluster < Sensu::Plugin::Check::CLI
-  option :cluster_name
+  option :cluster_name,
     :short => "-N NAME",
     :long => "--cluster-name NAME",
     :description => "Cluster name to prefix occurrences",
@@ -176,7 +176,6 @@ private
   end
 
   def send_payload(status, output)
-    binding.pry
     payload = {
       :client => sensu_settings[:client],
       :occurrences => 1,
@@ -184,9 +183,9 @@ private
       :check  => sensu_settings[:checks][config[:check]].merge(
         :status => status,
         :output => output,
-        :source => "cluster_#{config[:check]}")
+        :source => "#{config[:cluster_name]}_#{config[:check]}")
     }
 
-    puts "sending: #{payload.inspect}"
+    puts payload.to_json
   end
 end
