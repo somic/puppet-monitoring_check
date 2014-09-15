@@ -135,17 +135,30 @@ class CheckCluster < Sensu::Plugin::Check::CLI
 private
 
   def locked_run
-    # TODO: pyramid of doom!
+    # TODO: pyramid of doom! i'm horrible with EM
     EM::run do
       begin
         redis.setnx(lock_key, Time.now.to_i) do |created|
+          puts "lock acquired: " << created.inspect
           if created
-            redis.pexpire(lock_key, config[:lock_timeout]) do
+            redis.expire(lock_key, config[:lock_timeout]) do |result|
+              puts "locked: " << result.inspect
               yield
               EM::stop
             end
           else
-            EM::stop
+            redis.get(lock_key) do |age|
+              ttl = Time.now.to_i - age.to_i
+              if ttl > config[:lock_timeout].to_i
+                redis.expire(lock_key, 0) do
+                  EM::stop
+                  warning "was locked for #{ttl} seconds, expired immediately"
+                end
+              else
+                EM::stop
+                ok "lock expires in #{config[:lock_timeout] - ttl} seconds"
+              end
+            end
           end
         end
       rescue Exception => e
@@ -155,7 +168,7 @@ private
   end
 
   def lock_key
-    "lock:check_cluster:#{config[:check]}"
+    "lock:#{config[:cluster_name]}:#{config[:check]}"
   end
 
   def redis
