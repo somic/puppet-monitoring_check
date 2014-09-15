@@ -3,16 +3,13 @@
 # Check Cluster
 #
 
-# TODO: manage this via puppet?
-$: << "/usr/share/sensu-community-plugins/plugins"
-
 require 'rubygems'
 require 'pry'
 require 'sensu'
 require 'sensu/settings'
 require 'sensu/transport'
 require 'sensu/redis'
-load 'sensu/check-aggregate.rb'
+require 'sensu-plugin/check/cli'
 
 class CheckCluster < Sensu::Plugin::Check::CLI
   option :server_config,
@@ -27,51 +24,119 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "TTL on redis lock, usually same as check interval",
     :default => 60
 
+  ##############################################################################
+
+  option :api,
+    :short => "-a URL",
+    :long => "--api URL",
+    :description => "Sensu API URL",
+    :default => "http://localhost:4567"
+
+  option :user,
+    :short => "-u USER",
+    :long => "--user USER",
+    :description => "Sensu API USER"
+
+  option :password,
+    :short => "-p PASSWORD",
+    :long => "--password PASSWORD",
+    :description => "Sensu API PASSWORD"
+
+  option :timeout,
+    :short => "-t SECONDS",
+    :long => "--timeout SECONDS",
+    :description => "Sensu API connection timeout in SECONDS",
+    :proc => proc {|a| a.to_i },
+    :default => 30
+
   option :check,
     :short => "-c CHECK",
     :long => "--check CHECK",
     :description => "Aggregate CHECK name",
     :required => true
 
+  option :age,
+    :short => "-A SECONDS",
+    :long => "--age SECONDS",
+    :description => "Minimum aggregate age in SECONDS, time since check request issued",
+    :default => 30,
+    :proc => proc {|a| a.to_i }
+
+  option :limit,
+    :short => "-l LIMIT",
+    :long => "--limit LIMIT",
+    :description => "Limit of aggregates you want the API to return",
+    :proc => proc {|a| a.to_i }
+
+  option :summarize,
+    :short => "-s",
+    :long => "--summarize",
+    :boolean => true,
+    :description => "Summarize check result output",
+    :default => false
+
+  option :warning,
+    :short => "-W PERCENT",
+    :long => "--warning PERCENT",
+    :description => "PERCENT non-ok before warning",
+    :proc => proc {|a| a.to_i }
+
+  option :critical,
+    :short => "-C PERCENT",
+    :long => "--critical PERCENT",
+    :description => "PERCENT non-ok before critical",
+    :proc => proc {|a| a.to_i }
+
+  option :pattern,
+    :short => "-P PATTERN",
+    :long => "--pattern PATTERN",
+    :description => "A PATTERN to detect outliers"
+
+  option :message,
+    :short => "-M MESSAGE",
+    :long => "--message MESSAGE",
+    :description => "A custom error MESSAGE"
+
+  ##############################################################################
+
   def run
-    binding.pry
-    status = nil
-    EM::run { status = locked_run { check_aggregate } }
-    Kernel.exit status
+    locked_run do
+      status, output = check_aggregate
+      send_payload status, output
+      ok "Check executed successfully"
+    end
   end
 
   def check_aggregate
-    @output = capture_stdout { CheckAggregate.new.run }
-  rescue SystemExit => e
-    @status = e.status
+    binding.pry
+    # TODO: do not hardcode this?
+    args = ARGV.join(' ').
+             gsub(/(-S|--server-config)\s*[^\s]+/, '').
+             gsub(/(-L|--lock-timeout)\s*[^\s]+/, '')
+    cmd = "/usr/share/sensu-community-plugins/plugins/sensu/check-aggregate.rb #{args}"
+    out = `#{cmd}`
+    res = $?
+    return res, out
   end
 
 private
 
-  def locked_run(&block)
-    lock(&block)
-    p @output
-    p @status
-
-    ok
-  rescue SystemExit => e
-    exit e.status
-  rescue Exception => e
-    critical "\n#{e.backtrace.join "\n"}: #{e.message} (#{e.class})"
-  end
-
-  def lock(&block)
-    puts "redis queried"
-    redis.setnx(lock_key, Time.now.to_i) do |created|
-      puts "lock acquired: " << created.inspect
-      if created
-        redis.pexpire(lock_key, config[:lock_timeout]) do
-          block.call
-          puts "#lock done"
-          EM::stop
+  def locked_run
+    # TODO: pyramid of doom!
+    EM::run do
+      begin
+        redis.setnx(lock_key, Time.now.to_i) do |created|
+          if created
+            redis.pexpire(lock_key, config[:lock_timeout]) do
+              yield
+              EM::stop
+            end
+          else
+            EM::stop
+          end
         end
-      else
-        EM::stop
+      rescue Exception => e
+        critical "#{e.message} (#{e.class})\n#{e.backtrace.join "\n"}"
       end
     end
   end
@@ -94,24 +159,11 @@ private
     @transport = Transport.connect(transport_name, transport_settings)
   end
 
-  def payload
+  def send_payload
     payload = config.dup
 
     if sensu_settings.check_exists?(config[:name])
       payload.merge!(sensu_settings[:checks][config[:name]])
     end
-  end
-
-  def capture_stdout
-    out = StringIO.new
-    $stdout = out
-    yield
-    return out
-  ensure
-    $stdout = STDOUT
-  end
-
-  def exit(status)
-    status
   end
 end
