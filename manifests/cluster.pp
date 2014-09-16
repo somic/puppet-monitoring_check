@@ -10,20 +10,25 @@
 # [*command_add*]
 # Additional command arguments
 #
-# [*server_config*]
-# JSON file that has sensu-server redis configuration
+# [*config_dir*]
+# Directory with sensu configs
 #
 # [*lock_timeout*]
 # Values close to *check_every*?
+#
+# [*socket*]
+# TCP socket that alerts going to be sent to
 #
 # For rest see @monitoring_check.
 #
 #
 define monitoring_check::cluster (
     $runbook,
+    $cluster,
     $check                 = $name,
     $command_add           = "",
-    $server_config         = "/etc/sensu/config.json",
+    $config_dir            = "/etc/sensu/conf.d",
+    $socket                = "localhost:3030"
     $annotation            = annotate(),
     $check_every           = '1m',
     $lock_timeout          = $check_every,
@@ -36,23 +41,17 @@ define monitoring_check::cluster (
     $tip                   = false,
     $sla                   = 'No SLA defined.',
     $page                  = false,
-    $needs_sudo            = false,
-    $sudo_user             = 'root',
     $team                  = 'operations',
     $ensure                = 'present',
-    $dependencies          = [],
-    $low_flap_threshold    = undef,
-    $high_flap_threshold   = undef,
-    $aggregate             = false,
-    $sensu_custom          = {}
+    $dependencies          = []
 ) {
   include monitoring_check::cluster_check
   $human_lock_timeout = human_time_to_seconds($lock_timeout)
 
-  monitoring_check { "cluster::${name}":
+  monitoring_check { "${cluster}_${name}":
     command             =>
-      "/nail/usr/share/sensu-custom-plugins/check_cluster.rb " +
-      "-c ${check} -S ${server_config} -L ${human_lock_timeout} ${command_add}",
+      "/nail/usr/share/sensu-custom-plugins/check-cluster.rb -N ${cluster} -D ${config_dir}" +
+      "-c ${check} -S ${socket} -L ${human_lock_timeout} ${command_add}",
     runbook             => $runbook,
     annotation          => $annotation,
     check_every         => $check_every,
@@ -65,14 +64,8 @@ define monitoring_check::cluster (
     tip                 => $tip,
     sla                 => $sla,
     page                => $page,
-    needs_sudo          => $needs_sudo,
-    sudo_user           => $sudo_user,
     team                => $team,
     ensure              => $ensure,
-    dependencies        => $dependencies,
-    low_flap_threshold  => $low_flap_threshold,
-    high_flap_threshold => $high_flap_threshold,
-    aggregate           => $aggregate,
-    sensu_custom        => merge({source => $name}, $sensu_custom)
+    dependencies        => $dependencies
   }
 }

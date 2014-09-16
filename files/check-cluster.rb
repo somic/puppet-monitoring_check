@@ -10,23 +10,18 @@ require 'sensu/transport'
 require 'sensu/redis'
 require 'sensu-plugin/check/cli'
 require 'json'
+require 'socket'
 
 class CheckCluster < Sensu::Plugin::Check::CLI
   option :cluster_name,
     :short => "-N NAME",
     :long => "--cluster-name NAME",
-    :description => "Cluster name to prefix occurrences",
+    :description => "Name of the cluster to use in the source of the alerts (cluster_name + check_name)",
     :required => true
 
-  option :server_config,
-    :short => "-S FILE",
-    :long => "--server-config FILE",
-    :description => "Sensu server config file",
-    :default => "/etc/sensu/config.json"
-
-  option :server_config_dir,
+  option :config_dir,
     :short => "-D DIR",
-    :long => "--server-config-dir DIR",
+    :long => "--config-dir DIR",
     :description => "Sensu server config directory",
     :default => "/etc/sensu/conf.d"
 
@@ -36,56 +31,19 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "TTL on redis lock, usually same as check interval",
     :default => 60
 
-  ##############################################################################
+  option :socket,
+    :short => "-S HOST:PORT",
+    :long => "--socket SECONDS",
+    :description => "TCP socket to send payload to",
+    :default => "localhost:3030"
 
-  option :api,
-    :short => "-a URL",
-    :long => "--api URL",
-    :description => "Sensu API URL",
-    :default => "http://localhost:4567"
-
-  option :user,
-    :short => "-u USER",
-    :long => "--user USER",
-    :description => "Sensu API USER"
-
-  option :password,
-    :short => "-p PASSWORD",
-    :long => "--password PASSWORD",
-    :description => "Sensu API PASSWORD"
-
-  option :timeout,
-    :short => "-t SECONDS",
-    :long => "--timeout SECONDS",
-    :description => "Sensu API connection timeout in SECONDS",
-    :proc => proc {|a| a.to_i },
-    :default => 30
+  # Passed into check-aggregate as is
 
   option :check,
     :short => "-c CHECK",
     :long => "--check CHECK",
     :description => "Aggregate CHECK name",
     :required => true
-
-  option :age,
-    :short => "-A SECONDS",
-    :long => "--age SECONDS",
-    :description => "Minimum aggregate age in SECONDS, time since check request issued",
-    :default => 30,
-    :proc => proc {|a| a.to_i }
-
-  option :limit,
-    :short => "-l LIMIT",
-    :long => "--limit LIMIT",
-    :description => "Limit of aggregates you want the API to return",
-    :proc => proc {|a| a.to_i }
-
-  option :summarize,
-    :short => "-s",
-    :long => "--summarize",
-    :boolean => true,
-    :description => "Summarize check result output",
-    :default => false
 
   option :warning,
     :short => "-W PERCENT",
@@ -99,18 +57,6 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "PERCENT non-ok before critical",
     :proc => proc {|a| a.to_i }
 
-  option :pattern,
-    :short => "-P PATTERN",
-    :long => "--pattern PATTERN",
-    :description => "A PATTERN to detect outliers"
-
-  option :message,
-    :short => "-M MESSAGE",
-    :long => "--message MESSAGE",
-    :description => "A custom error MESSAGE"
-
-  ##############################################################################
-
   def run
     locked_run do
       status, output = check_aggregate
@@ -121,15 +67,18 @@ class CheckCluster < Sensu::Plugin::Check::CLI
 
   def check_aggregate
     # TODO: do not hardcode this?
+    api  = sensu_settings[:api]
     args = ARGV.join(' ').
-             gsub(/(-S|--server-config)\s*[^\s]+/, '').
              gsub(/(-L|--lock-timeout)\s*[^\s]+/, '').
-             gsub(/(-D|--server-config-dir)\s*[^\s]+/, '').
-             gsub(/(-N|--cluster-name)\s*[^\s]+/, '')
+             gsub(/(-D|--config-dir)\s*[^\s]+/, '').
+             gsub(/(-N|--cluster-name)\s*[^\s]+/, '').
+             gsub(/(-S|--socket)\s*[^\s]+/, '')
+    args << " -u #{api[:user]}" <<
+            " -p #{api[:password]}" <<
+            " -a http://#{api[:host]}:#{api[:port]}"
     cmd = "/usr/share/sensu-community-plugins/plugins/sensu/check-aggregate.rb #{args}"
-    output = `#{cmd}`
-    result = $?.exitstatus
-    return result, output
+    out = `#{cmd}`
+    return $?.exitstatus, out
   end
 
 private
@@ -162,6 +111,7 @@ private
           end
         end
       rescue Exception => e
+        EM::stop
         critical "#{e.message} (#{e.class})\n#{e.backtrace.join "\n"}"
       end
     end
@@ -177,15 +127,7 @@ private
 
   def sensu_settings
     @sensu_settings ||=
-      Sensu::Settings.get(
-        :config_file => config[:server_config],
-        :config_dirs => [config[:server_config_dir]])
-  end
-
-  def setup_transport
-    transport_name = sensu_settings[:transport][:name] || 'rabbitmq'
-    transport_settings = sensu_settings[transport_name]
-    @transport = Transport.connect(transport_name, transport_settings)
+      Sensu::Settings.get(:config_dirs => [config[:config_dir]])
   end
 
   def send_payload(status, output)
@@ -199,6 +141,8 @@ private
         :source => "#{config[:cluster_name]}_#{config[:check]}")
     }
 
-    puts payload.to_json
+    sock = TCPSocket.new(*config[:socket].split(':'))
+    sock.write payload.to_json
+    sock.close
   end
 end
