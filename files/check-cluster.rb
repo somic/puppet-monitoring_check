@@ -9,7 +9,6 @@ require 'net/http'
 require 'rubygems'
 require 'sensu'
 require 'sensu/settings'
-require 'sensu/redis'
 require 'sensu-plugin/check/cli'
 require 'json'
 
@@ -104,35 +103,19 @@ private
   end
 
   def locked_run
-    # TODO: pyramid of doom! i'm horrible with EM
-    EM::run do
-      begin
-        redis.setnx(lock_key, Time.now.to_i) do |created|
-          if created
-            redis.expire(lock_key, lock_interval) do |result|
-              yield
-              EM::stop
-            end
-          else
-            redis.get(lock_key) do |age|
-              ttl = Time.now.to_i - age.to_i
-              if ttl > lock_interval
-                redis.expire(lock_key, 0) do
-                  EM::stop
-                  warning "was locked for #{ttl} seconds, expired immediately"
-                end
-              else
-                EM::stop
-                ok "lock expires in #{lock_interval - ttl} seconds"
-              end
-            end
-          end
-        end
-      rescue Exception => e
-        EM::stop
-        critical "#{e.message} (#{e.class})\n#{e.backtrace.join "\n"}"
+    if redis.setnx(lock_key, Time.now.to_i) == 1
+      redis.expire(lock_key, lock_interval)
+      yield
+    else
+      if (ttl = Time.now.to_i - redis.get(lock_key).to_i) > lock_interval
+        redis.expire(lock_key, 0)
+        warning "was locked for #{ttl} seconds, expired immediately"
+      else
+        ok "lock expires in #{lock_interval - ttl} seconds"
       end
     end
+  rescue RuntimeError => e
+    critical "#{e.message} (#{e.class})\n#{e.backtrace.join "\n"}"
   end
 
   def lock_key
@@ -148,7 +131,8 @@ private
   end
 
   def redis
-    @redis ||= Sensu::Redis.connect(sensu_settings[:redis])
+    @redis ||= TinyRedisClient.new(
+      sensu_settings[:redis][:host], sensu_settings[:redis][:port])
   end
 
   def sensu_settings
@@ -168,5 +152,32 @@ private
     sock = TCPSocket.new('localhost', 3030)
     sock.puts payload.to_json
     sock.close
+  end
+end
+
+class TinyRedisClient
+  RN = "\r\n"
+
+  def initialize(host='localhost', port=6379)
+    @socket = TCPSocket.new(host, port)
+  end
+
+  def method_missing(method, *args)
+    args.unshift method
+    data = ["*#{args.size}", *args.map {|arg| "$#{arg.to_s.size}#{RN}#{arg}"}]
+    @socket.write(data.join(RN) << RN)
+    parse_response
+  end
+
+  def parse_response
+    case line = @socket.gets
+    when /^\+(.*)\r\n$/ then $1
+    when /^:(\d+)\r\n$/ then $1.to_i
+    when /^-(.*)\r\n$/  then raise "Redis error: #{$1}"
+    when /^\$([-\d]+)\r\n$/
+      $1.to_i >= 0 ? @socket.read($1.to_i+2)[0..-3] : nil
+    when /^\*([-\d]+)\r\n$/
+      $1.to_i > 0 ? (1..$1.to_i).inject([]) { |a,_| a << parse_response } : nil
+    end
   end
 end
