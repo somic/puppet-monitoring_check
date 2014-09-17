@@ -3,14 +3,15 @@
 # Check Cluster
 #
 
+require 'socket'
+require 'net/http'
+
 require 'rubygems'
 require 'sensu'
 require 'sensu/settings'
-require 'sensu/transport'
 require 'sensu/redis'
 require 'sensu-plugin/check/cli'
 require 'json'
-require 'socket'
 
 class CheckCluster < Sensu::Plugin::Check::CLI
   option :cluster_name,
@@ -24,8 +25,6 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :long => "--config-dir DIR",
     :description => "Sensu server config directory",
     :default => "/etc/sensu/conf.d"
-
-  # Passed into check-aggregate as is
 
   option :check,
     :short => "-c CHECK",
@@ -53,45 +52,78 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     end
   end
 
+private
+
+  EXIT_CODES = Sensu::Plugin::EXIT_CODES
+
   def check_aggregate
-    # TODO: do not hardcode this?
-    api  = sensu_settings[:api]
-    args = ARGV.join(' ').
-             gsub(/(-D|--config-dir)\s*[^\s]+/, '').
-             gsub(/(-N|--cluster-name)\s*[^\s]+/, '')
-    args << " -u #{api[:user]}" <<
-            " -p #{api[:password]}" <<
-            " -a http://#{api[:host]}:#{api[:port]}"
-    cmd = "/usr/share/sensu-community-plugins/plugins/sensu/check-aggregate.rb #{args}"
-    out = `#{cmd}`
-    return $?.exitstatus, out
+    path   = "/aggregates/#{config[:check]}"
+    issued = api_request(path, :age => 30)
+
+    return EXIT_CODES['WARNING'], "No aggregates for #{config[:check]}" if issued.empty?
+    time = issued.sort.last
+
+    return EXIT_CODES['WARNING'], "No aggregates older than #{config[:age]} seconds" unless time
+
+    aggregate = api_request("#{path}/#{time}")
+    check_thresholds(aggregate) { |status, msg| return status, msg }
+    # check_pattern(aggregate) { |status, msg| return status, msg }
+
+    return EXIT_CODES['OK'], "Aggregate looks GOOD"
   end
 
-private
+  # yielding means end of checking and sending payload to sensu
+  def check_thresholds(aggregate)
+    nz_pct  = ((1 - aggregate["ok"].to_f / aggregate["total"].to_f) * 100).to_i
+    message = "Number of non-zero results exceeds threshold (#{nz_pct}% non-zero)"
+
+    if config[:critical] && percent_non_zero >= config[:critical]
+      yield EXIT_CODES['CRITICAL'], message
+    elsif config[:warning] && percent_non_zero >= config[:warning]
+      yield EXIT_CODES['CRITICAL'], message
+    end
+  end
+
+  def api_request(path, opts={})
+    api = sensu_settings[:api]
+    uri = URI("http://#{api[:host]}:#{api[:port]}#{path}")
+    uri.query = URI.encode_www_form(opts)
+
+    req = Net::HTTP::Get.new(uri)
+    req.basic_auth api[:user], api[:password]
+
+    res = Net::HTTP.start(uri.hostname, uri.port) do |http|
+      http.request(req)
+    end
+
+    if res.is_a?(Net::HTTPSuccess)
+      JSON.parse(res.body)
+    else
+      raise "Error querying sensu api: #{res.code} '#{res.body}'"
+    end
+  end
 
   def locked_run
     # TODO: pyramid of doom! i'm horrible with EM
     EM::run do
       begin
         redis.setnx(lock_key, Time.now.to_i) do |created|
-          puts "lock acquired: " << created.inspect
           if created
-            redis.expire(lock_key, config[:interval]) do |result|
-              puts "locked: " << result.inspect
+            redis.expire(lock_key, lock_interval) do |result|
               yield
               EM::stop
             end
           else
             redis.get(lock_key) do |age|
               ttl = Time.now.to_i - age.to_i
-              if ttl > config[:interval].to_i
+              if ttl > lock_interval
                 redis.expire(lock_key, 0) do
                   EM::stop
                   warning "was locked for #{ttl} seconds, expired immediately"
                 end
               else
                 EM::stop
-                ok "lock expires in #{config[:interval] - ttl} seconds"
+                ok "lock expires in #{lock_interval - ttl} seconds"
               end
             end
           end
@@ -105,6 +137,14 @@ private
 
   def lock_key
     "lock:#{config[:cluster_name]}:#{config[:check]}"
+  end
+
+  # assume convention for naming aggregate checks as <cluster_name>_<check_name>
+  # default to aggregated check interval or 300 seconds
+  def lock_interval
+    check = sensu_settings[:checks][:"#{config[:cluster]}_#{config[:check]}"]
+    check ||= sensu_settings[:checks][config[:check]]
+    check[:interval] || 300
   end
 
   def redis
