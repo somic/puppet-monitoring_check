@@ -144,12 +144,16 @@ define monitoring_check (
   # https://github.com/sensu/sensu/blob/master/lib/sensu/settings.rb#L215
   validate_re($name, '^[\w\.-]+$', "Your sensu check name has special chars sensu won't like: ${name}" )
 
+  # Pull the team data configuration from the sensu_handlers module in order
+  # to validate the given inputs.
+  $team_data = hiera('sensu_handlers::teams')
+
   validate_re($ensure, '^(present|absent)$')
   validate_string($command)
   validate_string($runbook)
   validate_re($runbook, '^(https?://|y/)')
   validate_string($team)
-  $team_names = join(keys(hiera('monitoring::teams')), '|')
+  $team_names = join(keys($team_data), '|')
   validate_re($team, "^(${team_names})$")
   validate_bool($ticket)
 
@@ -170,7 +174,7 @@ define monitoring_check (
   if $irc_channels != undef {
     $irc_channel_array = any2array($irc_channels)
   } else {
-    $team_hash = hiera('monitoring::teams')
+    $team_hash = $team_data
     $irc_channel_array = $team_hash[$team]['notifications_irc_channel']
   }
 

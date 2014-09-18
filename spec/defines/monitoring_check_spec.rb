@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'monitoring_check' do
   let(:title) { 'examplecheck' }
-  let(:hiera_data) { { :sensu_enabled => true, :'monitoring::teams' => { 'operations' => {}, 'other' => {}} } }
+  let(:hiera_data) { { :sensu_enabled => true, :'sensu_handlers::teams' => { 'operations' => {}, 'other' => {}} } }
   let(:facts) { { :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu' } }
 
   let(:default_interval) { 60 }
