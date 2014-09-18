@@ -1,36 +1,26 @@
 module Puppet::Parser::Functions
-
-  newfunction(:human_time_to_seconds, :type => :rvalue, :doc => <<-'ENDHEREDOC'
-    Converts a human time of the form Xs, Xm or Xh into an integer number of seconds
-
-    ENDHEREDOC
-    ) do |args|
-
-    unless args.length == 1 then
-      raise Puppet::ParseError, ("human_time_to_seconds(): wrong number of arguments (#{args.length}; must be 1)")
-    end
-    arg = args[0]
-    unless arg.respond_to?('to_s') then
-      raise Puppet::ParseError, ("#{arg.inspect} is not a string. It looks to be a #{arg.class}")
+  newfunction(
+    :human_time_to_seconds,
+    :type => :rvalue,
+    :doc => <<-'ENDHEREDOC') do |args|
+Converts a human time of the form Xs, Xm or Xh into an integer number of seconds
+ENDHEREDOC
+    if !(arg = args.first) || args.size > 1
+      raise HumanTimeError, "wrong number of arguments (#{args.length}; must be 1)"
     end
 
-    data = arg.to_s.scan(/^(\d+)(\w)?$/)
-    if data.size != 1
-      raise Puppet::ParseError, ("#{arg} is not of the form \d+[hms]")
+    unless arg.respond_to? 'to_s'
+      raise HumanTimeError, "#{arg.class}(#{arg.inspect}) does not respond to #to_s"
     end
 
-    mult = 1
-    case data[0][1]
-    when nil, 's'
-    when 'm'
-      mult = 60
-    when 'h'
-      mult = 60*60
-    else
-      raise Puppet::ParseError, ("#{arg} multiplier '#{data[0][1]};' not known, only know s, m, g")
+    unless arg.to_s =~ /^(\d+)([hms])?$/
+      raise HumanTimeError, "#{arg} is not of the form \\d+([hms])?"
     end
-    time = data[0][0].to_i * mult
+
+    mult = {nil => 1, 's' => 1, 'm' => 60, 'h' => 3600}[$2]
+    time = $1.to_i * mult
     time.to_s
   end
-end
 
+  class HumanTimeError < Puppet::ParseError; end
+end
