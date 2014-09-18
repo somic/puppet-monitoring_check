@@ -37,11 +37,11 @@ define monitoring_check::cluster (
     $ensure                = 'present',
     $dependencies          = []
 ) {
-  include monitoring_check::check_cluster
+  require monitoring_check::check_cluster
 
   monitoring_check { "${cluster}_${name}":
     command             =>
-      "/nail/usr/share/sensu-custom-plugins/check-cluster.rb -N ${cluster} " +
+      "/etc/sensu/plugins/check-cluster.rb -N ${cluster} " +
       "-c ${check} -D ${config_dir} ${command_add}",
     runbook             => $runbook,
     annotation          => $annotation,

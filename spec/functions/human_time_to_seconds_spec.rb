@@ -10,12 +10,12 @@ describe 'human_time_to_seconds' do
   it { should run.with_params('2m').and_return('120') }
   it { should run.with_params('2h').and_return('7200') }
 
-  it 'works with ints'            { expect { call 30 }.not_to raise_error }
-  it 'fails with no args'         { expect { call }.to fail }
-  it 'fails with too many args'   { expect { call '1m', '2m' }.to fail }
-  it 'fails with not stringable'  { expect { call Class.new.new }.to fail }
-  it 'fails given unknown suffix' { expect { call '40z' }.to fail }
-  it 'fails if no integer'        { expect { call 'm' }.to fail }
-  it 'fails given non-int'        { expect { call '3.2s' }.to fail }
-  it 'fails given wrong format'   { expect { call ' 3s' }.to fail }
+  it('works with ints')            { expect { call 30 }.not_to raise_error }
+  it('fails with no args')         { expect { call }.to fail }
+  it('fails with too many args')   { expect { call '1m', '2m' }.to fail }
+  it('fails with not stringable')  { expect { call Class.new.new }.to fail }
+  it('fails given unknown suffix') { expect { call '40z' }.to fail }
+  it('fails if no integer')        { expect { call 'm' }.to fail }
+  it('fails given non-int')        { expect { call '3.2s' }.to fail }
+  it('fails given wrong format')   { expect { call ' 3s' }.to fail }
 end

@@ -114,6 +114,9 @@ private
         ok "lock expires in #{lock_interval - ttl} seconds"
       end
     end
+    redis.close
+  rescue SystemExit
+    redis.close
   rescue RuntimeError => e
     critical "#{e.message} (#{e.class})\n#{e.backtrace.join "\n"}"
   end
@@ -179,5 +182,9 @@ class TinyRedisClient
     when /^\*([-\d]+)\r\n$/
       $1.to_i > 0 ? (1..$1.to_i).inject([]) { |a,_| a << parse_response } : nil
     end
+  end
+
+  def close
+    @socket.close
   end
 end
