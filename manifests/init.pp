@@ -146,7 +146,7 @@ define monitoring_check (
 
   # Pull the team data configuration from the sensu_handlers module in order
   # to validate the given inputs.
-  $team_data = hiera('sensu_handlers::teams')
+  $team_data = hiera('sensu_handlers::teams', {})
 
   validate_re($ensure, '^(present|absent)$')
   validate_string($command)
