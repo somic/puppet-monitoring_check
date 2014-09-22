@@ -153,6 +153,9 @@ define monitoring_check (
   validate_string($runbook)
   validate_re($runbook, '^(https?://|y/)')
   validate_string($team)
+  if size(keys($team_data)) == 0 {
+    fail("No sensu_handlers::teams data could be loaded - need at least 1 team")
+  }
   $team_names = join(keys($team_data), '|')
   validate_re($team, "^(${team_names})$")
   validate_bool($ticket)

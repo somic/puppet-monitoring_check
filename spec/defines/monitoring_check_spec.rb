@@ -1,6 +1,20 @@
 require 'spec_helper'
 
 describe 'monitoring_check' do
+  context 'without teams data' do
+    let(:title) { 'examplecheck' }
+    let(:hiera_data) { { :sensu_enabled => true, :'sensu_handlers::teams' => { } } }
+    let(:facts) { { :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu' } }
+
+    let(:default_interval) { 60 }
+    let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => true} }
+      it do
+        expect {
+          should compile
+        }.to raise_error(Puppet::Error, /No sensu_handlers::teams/)
+      end
+  end
+  context 'with teams data' do
   let(:title) { 'examplecheck' }
   let(:hiera_data) { { :sensu_enabled => true, :'sensu_handlers::teams' => { 'operations' => {}, 'other' => {}} } }
   let(:facts) { { :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
@@ -209,7 +223,7 @@ describe 'monitoring_check' do
     it { should contain_sensu__check('examplecheck').with_aggregate(false) }
   end
 
-
+  end
 end
 
 
