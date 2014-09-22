@@ -131,7 +131,7 @@ define monitoring_check (
     $team                  = 'operations',
     $ensure                = 'present',
     $dependencies          = [],
-    $use_sensu             = pick($profile_sensu::enable, true),
+    $use_sensu             = true,
     $use_nagios            = false,
     $nagios_custom         = {},
     $low_flap_threshold    = undef,
