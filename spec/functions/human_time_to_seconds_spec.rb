@@ -5,6 +5,13 @@ describe 'human_time_to_seconds' do
   def call(*args); subject.call([*args]); end
   def fail; raise_error Puppet::Parser::Functions::HumanTimeError; end
 
+  let(:facts) {{
+    :osfamily => 'Debian',
+    :lsbdistid => 'Ubuntu',
+    :lsbdistcodename => 'lucid',
+    :ipaddress => '127.0.0.1'
+  }}
+
   it { should run.with_params('30').and_return('30') }
   it { should run.with_params('30s').and_return('30') }
   it { should run.with_params('2m').and_return('120') }
