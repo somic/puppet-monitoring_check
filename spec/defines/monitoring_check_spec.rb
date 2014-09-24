@@ -4,7 +4,7 @@ describe 'monitoring_check' do
   context 'without teams data' do
     let(:title) { 'examplecheck' }
     let(:hiera_data) { { :sensu_enabled => true, :'sensu_handlers::teams' => { } } }
-    let(:facts) { { :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu' } }
+    let(:facts) { { :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu' } }
 
     let(:default_interval) { 60 }
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => true} }
