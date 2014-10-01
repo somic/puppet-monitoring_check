@@ -1,6 +1,6 @@
 ##Overview
 
-[![Build Status](https://travis-ci.org/Yelp/puppet-monitoring_check.png&branch=master)](https://travis-ci.org/Yelp/puppet-monitoring\_check)
+[![Build Status](https://travis-ci.org/Yelp/puppet-monitoring_check.svg?branch=master)](https://travis-ci.org/Yelp/puppet-monitoring_check)
 
 `monitoring_check` is a puppet module to create Sensu checks.
 
