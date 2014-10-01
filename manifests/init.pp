@@ -117,6 +117,7 @@ define monitoring_check (
     $runbook,
     $annotation            = annotate(),
     $check_every           = '1m',
+    $timeout               = undef,
     $alert_after           = '0s',
     $realert_every         = '-1',
     $irc_channels          = undef,
@@ -170,6 +171,13 @@ define monitoring_check (
 
   $interval_s = human_time_to_seconds($check_every)
   validate_re($interval_s, '^\d+$')
+
+  if $timeout {
+    $timeout_s = human_time_to_seconds($timeout)
+  } else {
+    $timeout_s = min($interval_s, 3600)
+  }
+
   $alert_after_s = human_time_to_seconds($alert_after)
   validate_re($alert_after_s, '^\d+$')
   validate_re($realert_every, '^(-)?\d+$')
@@ -203,6 +211,7 @@ define monitoring_check (
       handlers            => 'default', # Always use the default handler, it'll route things via escalation_team
       command             => $real_command,
       interval            => $interval_s,
+      timeout             => $timeout_s,
       low_flap_threshold  => $high_flap_threshold,
       high_flap_threshold => $low_flap_threshold,
       handle              => $handle,
