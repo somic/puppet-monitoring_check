@@ -223,6 +223,23 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_aggregate(false) }
     end
 
+    context "check with timeout" do
+      let(:params) { { :command => 'bar', :runbook => 'y/gronk', :check_every => '5m', :timeout => 50 } }
+      it { should contain_sensu__check('examplecheck').with_timeout(50) }
+    end
+
+    context "check default timeout" do
+      let(:params) { { :command => 'bar', :runbook => 'y/gronk', :check_every => '5m' } }
+      it { should contain_sensu__check('examplecheck').with_timeout(300) }
+    end
+
+    context "check default timeout for long period checks" do
+      let(:params) { { :command => 'bar', :runbook => 'y/gronk', :check_every => '5h' } }
+      it { should contain_sensu__check('examplecheck').with_timeout(3600) }
+    end
+
+
+
   end
 end
 
