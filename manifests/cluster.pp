@@ -17,7 +17,7 @@ define monitoring_check::cluster (
     $runbook,
     $cluster,
     $check                 = $name,
-    $command_add           = "",
+    $command_add           = '',
     $annotation            = annotate(),
     $check_every           = '1m',
     $alert_after           = '0s',
@@ -33,11 +33,12 @@ define monitoring_check::cluster (
     $ensure                = 'present',
     $dependencies          = []
 ) {
-  require monitoring_check::check_cluster
+  require monitoring_check::check_cluster_install
 
   monitoring_check { "${cluster}_${name}":
-    command             =>
-      "/etc/sensu/plugins/check-cluster.rb -N ${cluster} -c ${check} ${command_add}",
+    ensure              => $ensure,
+    command             => '/etc/sensu/plugins/check-cluster.rb' +
+      " -N ${cluster} -c ${check} ${command_add}",
     runbook             => $runbook,
     annotation          => $annotation,
     check_every         => $check_every,
@@ -51,7 +52,6 @@ define monitoring_check::cluster (
     sla                 => $sla,
     page                => $page,
     team                => $team,
-    ensure              => $ensure,
     dependencies        => $dependencies
   }
 }
