@@ -19,12 +19,6 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "Name of the cluster to use in the source of the alerts",
     :required => true
 
-  option :config_dir,
-    :short => "-D DIR",
-    :long => "--config-dir DIR",
-    :description => "Sensu server config directory",
-    :default => "/etc/sensu/conf.d"
-
   option :check,
     :short => "-c CHECK",
     :long => "--check CHECK",
@@ -140,7 +134,7 @@ private
 
   def sensu_settings
     @sensu_settings ||=
-      Sensu::Settings.get(:config_dirs => [config[:config_dir]])
+      Sensu::Settings.get(:config_dirs => ["/etc/sensu/conf.d"])
   end
 
   def send_payload(status, output)
