@@ -19,19 +19,19 @@ define monitoring_check::cluster (
     $command_add           = '',
     $runbook               = false,
     $annotation            = annotate(),
-    $check_every           = '1m',
-    $alert_after           = '0s',
-    $realert_every         = '-1',
+    $check_every           = undef,
+    $alert_after           = undef,
+    $realert_every         = undef,
     $irc_channels          = undef,
-    $notification_email    = 'undef',
-    $ticket                = false,
-    $project               = false,
-    $tip                   = false,
-    $sla                   = 'No SLA defined.',
-    $page                  = false,
-    $team                  = 'operations',
-    $ensure                = 'present',
-    $dependencies          = []
+    $notification_email    = undef,
+    $ticket                = undef,
+    $project               = undef,
+    $tip                   = undef,
+    $sla                   = undef,
+    $page                  = undef,
+    $team                  = undef,
+    $ensure                = undef,
+    $dependencies          = undef
 ) {
   require monitoring_check::check_cluster_install
 
