@@ -108,11 +108,10 @@ private
         ok "lock expires in #{lock_interval - ttl} seconds"
       end
     end
-    redis.close
-  rescue SystemExit
-    redis.close
   rescue RuntimeError => e
     critical "#{e.message} (#{e.class})\n#{e.backtrace.join "\n"}"
+  ensure
+    redis.close
   end
 
   def lock_key
@@ -167,7 +166,7 @@ class TinyRedisClient
   end
 
   def parse_response
-    case line = @socket.gets
+    case @socket.gets
     when /^\+(.*)\r\n$/ then $1
     when /^:(\d+)\r\n$/ then $1.to_i
     when /^-(.*)\r\n$/  then raise "Redis error: #{$1}"
