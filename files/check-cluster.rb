@@ -73,7 +73,7 @@ private
     if config[:critical] && percent_non_zero >= config[:critical]
       yield EXIT_CODES['CRITICAL'], message
     elsif config[:warning] && percent_non_zero >= config[:warning]
-      yield EXIT_CODES['CRITICAL'], message
+      yield EXIT_CODES['WARNING'], message
     end
   end
 
@@ -121,9 +121,7 @@ private
   # assume convention for naming aggregate checks as <cluster_name>_<check_name>
   # default to aggregated check interval or 300 seconds
   def lock_interval
-    check = sensu_settings[:checks][:"#{config[:cluster]}_#{config[:check]}"]
-    check ||= sensu_settings[:checks][config[:check]]
-    check[:interval] || 300
+    (cluster_check || target_check || {})[:interval] || 300
   end
 
   def redis
@@ -138,16 +136,26 @@ private
 
   def send_payload(status, output)
     payload =
-      sensu_settings[:checks][config[:check]].merge(
+      target_check.merge(
         :status => status,
         :output => output,
         :source => config[:cluster_name],
         :name   => config[:check])
+
+    payload[:runbook] = cluster_check[:runbook] if cluster_check[:runbook]
     payload.delete :command
 
     sock = TCPSocket.new('localhost', 3030)
     sock.puts payload.to_json
     sock.close
+  end
+
+  def cluster_check
+    sensu_settings[:checks][:"#{config[:cluster]}_#{config[:check]}"]
+  end
+
+  def target_check
+    sensu_settings[:checks][config[:check]]
   end
 end
 

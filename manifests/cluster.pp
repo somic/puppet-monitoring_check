@@ -14,10 +14,10 @@
 #
 #
 define monitoring_check::cluster (
-    $runbook,
     $cluster,
     $check                 = $name,
     $command_add           = '',
+    $runbook               = false,
     $annotation            = annotate(),
     $check_every           = '1m',
     $alert_after           = '0s',
