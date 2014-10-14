@@ -135,14 +135,14 @@ private
   end
 
   def send_payload(status, output)
-    payload =
-      target_check.merge(
-        :status => status,
-        :output => output,
-        :source => config[:cluster_name],
-        :name   => config[:check])
+    payload = target_check.merge(
+      :status => status,
+      :output => output,
+      :source => config[:cluster_name],
+      :name   => config[:check])
 
-    payload[:runbook] = cluster_check[:runbook] if cluster_check[:runbook]
+    payload[:runbook] = cluster_check[:runbook] if cluster_check[:runbook] != '-'
+    payload[:tip]     = cluster_check[:tip] if cluster_check[:tip] != '-'
     payload.delete :command
 
     sock = TCPSocket.new('localhost', 3030)

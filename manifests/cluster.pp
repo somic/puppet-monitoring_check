@@ -17,7 +17,8 @@ define monitoring_check::cluster (
     $cluster,
     $check                 = $name,
     $command_add           = '',
-    $runbook               = false,
+    $runbook               = '-', # these are special: if '-', value will
+    $tip                   = '-', # be taken from target check
     $annotation            = annotate(),
     $check_every           = undef,
     $alert_after           = undef,
@@ -26,7 +27,6 @@ define monitoring_check::cluster (
     $notification_email    = undef,
     $ticket                = undef,
     $project               = undef,
-    $tip                   = undef,
     $sla                   = undef,
     $page                  = undef,
     $team                  = undef,
