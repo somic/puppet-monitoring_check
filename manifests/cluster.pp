@@ -19,7 +19,7 @@ define monitoring_check::cluster (
     $command_add           = '',
     $runbook               = '-', # these are special: if '-', value will
     $tip                   = '-', # be taken from target check
-    $annotation            = annotate(),
+    $annotation            = 'cluster_check',
     $check_every           = undef,
     $alert_after           = undef,
     $realert_every         = undef,
