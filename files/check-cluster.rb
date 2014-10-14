@@ -40,6 +40,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
   def run
     locked_run do
       status, output = check_aggregate
+      puts output
       send_payload status, output
       ok "Check executed successfully"
     end
@@ -100,10 +101,12 @@ private
 
   def locked_run
     if redis.setnx(lock_key, Time.now.to_i) == 1
+      puts "lock acquired"
       begin
         redis.expire(lock_key, lock_interval)
         yield
       rescue => e
+        puts "releasing lock"
         redis.expire(lock_key, 0)
         raise e
       end
