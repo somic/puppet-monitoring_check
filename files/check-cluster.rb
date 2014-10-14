@@ -168,13 +168,13 @@ private
   end
 
   def cluster_check
+    return {} if ENV['DEBUG']
     return JSON.parse(ENV['DEBUG_CC']) if ENV['DEBUG_CC']
     sensu_settings[:checks][:"#{config[:cluster_name]}_#{config[:check]}"] or
       raise "#{config[:cluster_name]}_#{config[:check]} not found in sensu settings"
   end
 
   def target_check
-    return JSON.parse(ENV['DEBUG_TC']) if ENV['DEBUG_TC']
     sensu_settings[:checks][config[:check]] or
       raise "#{config[:check]} not found in sensu settings"
   end
