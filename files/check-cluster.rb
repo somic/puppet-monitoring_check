@@ -77,6 +77,8 @@ private
       yield EXIT_CODES['CRITICAL'], message
     elsif config[:warning] && percent_non_zero >= config[:warning]
       yield EXIT_CODES['WARNING'], message
+    else
+      puts "Number of non-zero results: #{nz_pct}% - OK"
     end
   end
 
@@ -100,13 +102,15 @@ private
   end
 
   def locked_run
+    redis.expire(lock_key, 0) if ENV['DEBUG_UNLOCK']
+
     if redis.setnx(lock_key, Time.now.to_i) == 1
-      puts "lock acquired"
+      puts "Lock acquired"
       begin
         redis.expire(lock_key, lock_interval)
         yield
       rescue => e
-        puts "releasing lock"
+        puts "Releasing lock due to error"
         redis.expire(lock_key, 0)
         raise e
       end
@@ -143,7 +147,8 @@ private
 
   def sensu_settings
     @sensu_settings ||=
-      Sensu::Settings.get(:config_dirs => ["/etc/sensu/conf.d"])
+      Sensu::Settings.get(:config_dirs => ["/etc/sensu/conf.d"]) or
+      raise "Sensu settings not available"
   end
 
   def send_payload(status, output)
@@ -163,11 +168,15 @@ private
   end
 
   def cluster_check
-    sensu_settings[:checks][:"#{config[:cluster]}_#{config[:check]}"]
+    return JSON.parse(ENV['DEBUG_CC']) if ENV['DEBUG_CC']
+    sensu_settings[:checks][:"#{config[:cluster_name]}_#{config[:check]}"] or
+      raise "#{config[:cluster_name]}_#{config[:check]} not found in sensu settings"
   end
 
   def target_check
-    sensu_settings[:checks][config[:check]]
+    return JSON.parse(ENV['DEBUG_TC']) if ENV['DEBUG_TC']
+    sensu_settings[:checks][config[:check]] or
+      raise "#{config[:check]} not found in sensu settings"
   end
 end
 
