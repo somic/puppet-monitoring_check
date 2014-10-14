@@ -37,8 +37,7 @@ define monitoring_check::cluster (
 
   monitoring_check { "${cluster}_${name}":
     ensure              => $ensure,
-    command             => '/etc/sensu/plugins/check-cluster.rb' +
-      " -N ${cluster} -c ${check} ${command_add}",
+    command             => "/etc/sensu/plugins/check-cluster.rb  -N ${cluster} -c ${check} ${command_add}",
     runbook             => $runbook,
     annotation          => $annotation,
     check_every         => $check_every,
