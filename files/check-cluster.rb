@@ -43,6 +43,8 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       send_payload status, output
       ok "Check executed successfully"
     end
+  rescue RuntimeError => e
+    critical "#{e.message} (#{e.class}): #{e.backtrace.inspect}"
   end
 
 private
@@ -98,8 +100,13 @@ private
 
   def locked_run
     if redis.setnx(lock_key, Time.now.to_i) == 1
-      redis.expire(lock_key, lock_interval)
-      yield
+      begin
+        redis.expire(lock_key, lock_interval)
+        yield
+      rescue => e
+        redis.expire(lock_key, 0)
+        raise e
+      end
     else
       if (ttl = Time.now.to_i - redis.get(lock_key).to_i) > lock_interval
         redis.expire(lock_key, 0)
@@ -108,10 +115,8 @@ private
         ok "lock expires in #{lock_interval - ttl} seconds"
       end
     end
-  rescue RuntimeError => e
-    critical "#{e.message} (#{e.class})\n#{e.backtrace.join "\n"}"
   ensure
-    redis.close
+    redis.close rescue nil
   end
 
   def lock_key
@@ -126,7 +131,11 @@ private
 
   def redis
     @redis ||= TinyRedisClient.new(
-      sensu_settings[:redis][:host], sensu_settings[:redis][:port])
+      redis_config[:host], redis_config[:port])
+  end
+
+  def redis_config
+    sensu_settings[:redis] or raise "Redis config not available"
   end
 
   def sensu_settings
