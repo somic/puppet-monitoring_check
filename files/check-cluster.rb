@@ -38,7 +38,12 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :proc => proc {|a| a.to_i }
 
   def run
-    locked_run do
+    redis_config  = sensu_settings[:redis] or raise "Redis config not available"
+    redis         = TinyRedisClient.new(redis_config[:host], redis_config[:port])
+    lock_key      = "lock:#{config[:cluster_name]}:#{config[:check]}"
+    lock_interval = (cluster_check || target_check || {})[:interval] || 300
+
+    RedisLocker.new(redis, lock_key, lock_interval).locked_run(self) do
       status, output = check_aggregate
       puts output
       send_payload status, output
@@ -70,15 +75,16 @@ private
 
   # yielding means end of checking and sending payload to sensu
   def check_thresholds(aggregate)
-    nz_pct  = ((1 - aggregate["ok"].to_f / aggregate["total"].to_f) * 100).to_i
-    message = "Number of non-zero results exceeds threshold (#{nz_pct}% non-zero)"
+    ok, total = aggregate.values_at("ok", "total")
+    nz_pct    = ((1 - ok.to_f / total.to_f) * 100).to_i
+    message   = "Number of non-zero results exceeds threshold (#{nz_pct}% non-zero)"
 
     if config[:critical] && percent_non_zero >= config[:critical]
       yield EXIT_CODES['CRITICAL'], message
     elsif config[:warning] && percent_non_zero >= config[:warning]
       yield EXIT_CODES['WARNING'], message
     else
-      puts "Number of non-zero results: #{nz_pct}% - OK"
+      puts "Number of non-zero results: #{ok}/#{total} #{nz_pct}% - OK"
     end
   end
 
@@ -99,50 +105,6 @@ private
     else
       raise "Error querying sensu api: #{res.code} '#{res.body}'"
     end
-  end
-
-  def locked_run
-    redis.expire(lock_key, 0) if ENV['DEBUG_UNLOCK']
-
-    if redis.setnx(lock_key, Time.now.to_i) == 1
-      puts "Lock acquired"
-      begin
-        redis.expire(lock_key, lock_interval)
-        yield
-      rescue => e
-        puts "Releasing lock due to error"
-        redis.expire(lock_key, 0)
-        raise e
-      end
-    else
-      if (ttl = Time.now.to_i - redis.get(lock_key).to_i) > lock_interval
-        redis.expire(lock_key, 0)
-        warning "was locked for #{ttl} seconds, expired immediately"
-      else
-        ok "lock expires in #{lock_interval - ttl} seconds"
-      end
-    end
-  ensure
-    redis.close rescue nil
-  end
-
-  def lock_key
-    "lock:#{config[:cluster_name]}:#{config[:check]}"
-  end
-
-  # assume convention for naming aggregate checks as <cluster_name>_<check_name>
-  # default to aggregated check interval or 300 seconds
-  def lock_interval
-    (cluster_check || target_check || {})[:interval] || 300
-  end
-
-  def redis
-    @redis ||= TinyRedisClient.new(
-      redis_config[:host], redis_config[:port])
-  end
-
-  def redis_config
-    sensu_settings[:redis] or raise "Redis config not available"
   end
 
   def sensu_settings
@@ -170,6 +132,7 @@ private
   def cluster_check
     return {} if ENV['DEBUG']
     return JSON.parse(ENV['DEBUG_CC']) if ENV['DEBUG_CC']
+
     sensu_settings[:checks][:"#{config[:cluster_name]}_#{config[:check]}"] or
       raise "#{config[:cluster_name]}_#{config[:check]} not found in sensu settings"
   end
@@ -177,6 +140,44 @@ private
   def target_check
     sensu_settings[:checks][config[:check]] or
       raise "#{config[:check]} not found in sensu settings"
+  end
+end
+
+class RedisLocker
+  def initialize(redis, key, interval, now = Time.now.to_i)
+    raise "Redis connection check failed" unless "hello" == redis.echo("hello")
+
+    @redis    = redis
+    @key      = key
+    @interval = interval.to_i
+    @now      = now
+  end
+
+  def locked_run(status)
+    expire if ENV['DEBUG_UNLOCK']
+
+    if @redis.setnx(@key, @now) == 1
+      puts "Lock acquired"
+
+      begin
+        expire @interval
+        yield
+      rescue => e
+        expire
+        status.critical "Releasing lock due to error: #{e} #{e.backtrace}"
+      end
+    elsif (ttl = @now - @redis.get(@key).to_i) > @interval
+      expire
+      status.warning "Locked for #{ttl} seconds, expired immediately"
+    else
+      status.ok "Lock expires in #{@interval - ttl} seconds"
+    end
+  end
+
+private
+
+  def expire(seconds=0)
+    @redis.pexpire(@key, seconds*100)
   end
 end
 
