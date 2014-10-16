@@ -141,13 +141,12 @@ define monitoring_check (
     $sensu_custom          = {},
 ) {
 
+  include monitoring_check::params
+  $team_data = $monitoring_check::params::team_data
+
   # Catch RE errors before they stop sensu:
   # https://github.com/sensu/sensu/blob/master/lib/sensu/settings.rb#L215
   validate_re($name, '^[\w\.-]+$', "Your sensu check name has special chars sensu won't like: ${name}" )
-
-  # Pull the team data configuration from the sensu_handlers module in order
-  # to validate the given inputs.
-  $team_data = hiera('sensu_handlers::teams', {})
 
   validate_re($ensure, '^(present|absent)$')
   validate_string($command)
@@ -182,6 +181,7 @@ define monitoring_check (
   validate_re($alert_after_s, '^\d+$')
   validate_re($realert_every, '^(-)?\d+$')
 
+  # TODO: Handle this logic at the handler level?
   if $irc_channels != undef {
     $irc_channel_array = any2array($irc_channels)
   } else {
