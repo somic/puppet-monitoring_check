@@ -166,11 +166,15 @@ class RedisLocker
         expire
         status.critical "Releasing lock due to error: #{e} #{e.backtrace}"
       end
-    elsif (ttl = @now - @redis.get(@key).to_i) > @interval
-      expire
-      status.warning "Locked for #{ttl} seconds, expired immediately"
+    elsif lock_value = @redis.get(@key)
+      if (ttl = @now - lock_value.to_i) > @interval
+        expire
+        status.warning "Lock problem: #{@now.inspect} - #{locked_at.inspect} > #{@interval}, expired immediately"
+      else
+        status.ok "Lock expires in #{@interval - ttl} seconds"
+      end
     else
-      status.ok "Lock expires in #{@interval - ttl} seconds"
+      status.ok "Lock slipped away"
     end
   end
 
