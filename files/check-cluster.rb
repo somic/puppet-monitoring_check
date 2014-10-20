@@ -177,7 +177,7 @@ class RedisLocker
 private
 
   def expire(seconds=0)
-    @redis.pexpire(@key, seconds*100)
+    @redis.pexpire(@key, seconds*1000)
   end
 end
 
