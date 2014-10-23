@@ -11,6 +11,7 @@ gem 'travis-lint'
 gem 'puppet-syntax'
 gem 'puppet', ENV['PUPPET_VERSION'] || '~> 3.6.0'
 gem 'vagrant-wrapper'
+gem 'rspec-puppet-utils'
 
 gem 'hiera-puppet-helper',
   :git => 'https://github.com/bobtfish/hiera-puppet-helper.git',

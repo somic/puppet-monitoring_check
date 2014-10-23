@@ -11,3 +11,5 @@
 
 # Vagrant
 .vagrant
+
+/spec/fixtures/modules/
