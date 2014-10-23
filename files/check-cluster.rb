@@ -40,35 +40,39 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :proc => proc {|a| a.to_i }
 
   def run
-    redis_config  = sensu_settings[:redis] or raise "Redis config not available"
-    redis         = TinyRedisClient.new(redis_config[:host], redis_config[:port])
     lock_key      = "lock:#{config[:cluster_name]}:#{config[:check]}"
     lock_interval = (cluster_check || target_check || {})[:interval] || 300
+    logger        = defined?(IN_RSPEC) ? StringIO.new("") : $stdout
 
-    RedisLocker.new(redis, lock_key, lock_interval, logger).locked_run(self) do
+    locker(self, redis, lock_key, lock_interval, logger).run do
       status, output = check_aggregate
       logger.puts output
       send_payload status, output
       ok "Check executed successfully"
     end
+
+    unknown "Check didn't report status"
   rescue RuntimeError => e
     critical "#{e.message} (#{e.class}): #{e.backtrace.inspect}"
-  end
-
-  def logger
-    @logger ||= defined?(IN_RSPEC) ? StringIO.new("") : $stdout
   end
 
 private
 
   EXIT_CODES = Sensu::Plugin::EXIT_CODES
 
+  def locker(*args)
+    RedisLocker.new(*args)
+  end
+
+  def redis
+    redis_config = sensu_settings[:redis] or raise "Redis config not available"
+    TinyRedisClient.new(redis_config[:host], redis_config[:port])
+  end
+
   def check_aggregate
     path   = "/aggregates/#{config[:check]}"
     issued = api_request(path, :age => 30)
-
-    return EXIT_CODES['WARNING'], "No aggregates for #{config[:check]}" if issued.empty?
-    time = issued.sort.last
+    time   = issued.sort.last
 
     return EXIT_CODES['WARNING'], "No aggregates older than #{config[:age]} seconds" unless time
 
@@ -150,11 +154,12 @@ private
 end
 
 class RedisLocker
-  attr_reader :redis, :key, :interval, :now, :logger
+  attr_reader :status, :redis, :key, :interval, :now, :logger
 
-  def initialize(redis, key, interval, now = Time.now.to_i, logger = $stdout)
+  def initialize(status, redis, key, interval, now = Time.now.to_i, logger = $stdout)
     raise "Redis connection check failed" unless "hello" == redis.echo("hello")
 
+    @status   = status
     @redis    = redis
     @key      = key
     @interval = interval.to_i
@@ -162,7 +167,7 @@ class RedisLocker
     @logger   = logger
   end
 
-  def locked_run(status)
+  def run
     expire if ENV['DEBUG_UNLOCK']
 
     if redis.setnx(key, now) == 1
@@ -174,6 +179,7 @@ class RedisLocker
       rescue => e
         expire
         status.critical "Releasing lock due to error: #{e} #{e.backtrace}"
+        raise e
       end
     elsif lock_value = redis.get(key)
       if (ttl = now - lock_value.to_i) > interval

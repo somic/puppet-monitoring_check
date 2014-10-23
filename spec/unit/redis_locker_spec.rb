@@ -12,7 +12,7 @@ describe RedisLocker do
   let(:key)    { "key" }
   let(:status) { double(:status) }
   let(:redis)  { double(:redis) }
-  let(:locker) { RedisLocker.new(redis, key, interval, now, log) }
+  let(:locker) { RedisLocker.new(status, redis, key, interval, now, log) }
 
   def setup_mocks
     redis.stub(
@@ -32,19 +32,19 @@ describe RedisLocker do
 
   context "when lock can be acquired" do
     it "should run the block" do
-      expect { |b| locker.locked_run(status, &b) }.to yield_control
+      expect { |b| locker.run(&b) }.to yield_control
     end
 
     it "should lock and expire" do
       expect(locker).to receive(:expire).with(10)
-      locker.locked_run(status) { }
+      locker.run { }
     end
 
     it "should clear lock upon error" do
       expect(locker).to receive(:expire).with(10)
       expect(locker).to receive(:expire).with
       expect(status).to receive(:critical)
-      locker.locked_run(status) { raise "fail" }
+      expect { locker.run { raise "fail" } }.to raise_error
     end
   end
 
@@ -53,7 +53,7 @@ describe RedisLocker do
       redis.stub(:setnx).and_return(0)
       redis.stub(:get).and_return(locked)
       expect(status).to receive(:ok).with(/expires/)
-      locker.locked_run(status) { }
+      locker.run { }
     end
   end
 
@@ -62,7 +62,7 @@ describe RedisLocker do
       redis.stub(:setnx).and_return(0)
       redis.stub(:get).and_return(nil)
       expect(status).to receive(:ok).with(/slipped/)
-      locker.locked_run(status) { }
+      locker.run { }
     end
   end
 
@@ -71,7 +71,7 @@ describe RedisLocker do
       redis.stub(:setnx).and_return(0)
       redis.stub(:get).and_return(expired)
       expect(status).to receive(:warning).with(/problem/)
-      locker.locked_run(status) { }
+      locker.run { }
     end
   end
 end
