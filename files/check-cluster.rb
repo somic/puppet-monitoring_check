@@ -6,11 +6,13 @@
 require 'socket'
 require 'net/http'
 
-require 'rubygems'
-require 'sensu'
-require 'sensu/settings'
-require 'sensu-plugin/check/cli'
-require 'json'
+if !defined?(IN_RSPEC)
+  require 'rubygems'
+  require 'sensu'
+  require 'sensu/settings'
+  require 'sensu-plugin/check/cli'
+  require 'json'
+end
 
 class CheckCluster < Sensu::Plugin::Check::CLI
   option :cluster_name,
@@ -43,14 +45,18 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     lock_key      = "lock:#{config[:cluster_name]}:#{config[:check]}"
     lock_interval = (cluster_check || target_check || {})[:interval] || 300
 
-    RedisLocker.new(redis, lock_key, lock_interval).locked_run(self) do
+    RedisLocker.new(redis, lock_key, lock_interval, logger).locked_run(self) do
       status, output = check_aggregate
-      puts output
+      logger.puts output
       send_payload status, output
       ok "Check executed successfully"
     end
   rescue RuntimeError => e
     critical "#{e.message} (#{e.class}): #{e.backtrace.inspect}"
+  end
+
+  def logger
+    @logger ||= defined?(IN_RSPEC) ? StringIO.new("") : $stdout
   end
 
 private
@@ -79,12 +85,12 @@ private
     nz_pct    = ((1 - ok.to_f / total.to_f) * 100).to_i
     message   = "Number of non-zero results exceeds threshold (#{nz_pct}% non-zero)"
 
-    if config[:critical] && percent_non_zero >= config[:critical]
+    if config[:critical] && nz_pct >= config[:critical]
       yield EXIT_CODES['CRITICAL'], message
-    elsif config[:warning] && percent_non_zero >= config[:warning]
+    elsif config[:warning] && nz_pct >= config[:warning]
       yield EXIT_CODES['WARNING'], message
     else
-      puts "Number of non-zero results: #{ok}/#{total} #{nz_pct}% - OK"
+      logger.puts "Number of non-zero results: #{ok}/#{total} #{nz_pct}% - OK"
     end
   end
 
@@ -144,34 +150,36 @@ private
 end
 
 class RedisLocker
-  def initialize(redis, key, interval, now = Time.now.to_i)
+  attr_reader :redis, :key, :interval, :now, :logger
+
+  def initialize(redis, key, interval, now = Time.now.to_i, logger = $stdout)
     raise "Redis connection check failed" unless "hello" == redis.echo("hello")
 
     @redis    = redis
     @key      = key
     @interval = interval.to_i
     @now      = now
+    @logger   = logger
   end
 
   def locked_run(status)
     expire if ENV['DEBUG_UNLOCK']
 
-    if @redis.setnx(@key, @now) == 1
-      puts "Lock acquired"
+    if redis.setnx(key, now) == 1
+      logger.puts "Lock acquired"
 
       begin
-        expire @interval
+        expire interval
         yield
       rescue => e
         expire
         status.critical "Releasing lock due to error: #{e} #{e.backtrace}"
       end
-    elsif lock_value = @redis.get(@key)
-      if (ttl = @now - lock_value.to_i) > @interval
-        expire
-        status.warning "Lock problem: #{@now.inspect} - #{locked_at.inspect} > #{@interval}, expired immediately"
+    elsif lock_value = redis.get(key)
+      if (ttl = now - lock_value.to_i) > interval
+        status.warning "Lock problem: #{now} - #{lock_value} > #{interval}, expired immediately"
       else
-        status.ok "Lock expires in #{@interval - ttl} seconds"
+        status.ok "Lock expires in #{interval - ttl} seconds"
       end
     else
       status.ok "Lock slipped away"
@@ -181,7 +189,7 @@ class RedisLocker
 private
 
   def expire(seconds=0)
-    @redis.pexpire(@key, seconds*1000)
+    redis.pexpire(@key, seconds*1000)
   end
 end
 
