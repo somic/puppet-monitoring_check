@@ -12,10 +12,13 @@ describe CheckCluster do
                    :test_check => { } } }
   end
 
-  let(:redis)  { double(:redis) }
-  let(:locker) do
-    double(:locker).tap do |locker|
-      locker.stub(:run).and_yield
+  let(:redis)  do
+    double(:redis).tap do |redis|
+      redis.stub(
+        :echo    => "hello",
+        :setnx   => 1,
+        :pexpire => 1,
+        :get     => Time.now.to_i - 5)
     end
   end
 
@@ -27,8 +30,8 @@ describe CheckCluster do
         :config         => config,
         :sensu_settings => sensu_settings,
         :redis          => redis,
-        :locker         => locker,
-        :logger         => logger)
+        :logger         => logger,
+        :unknown        => nil)
 
       check.stub(:api_request).
         with("/aggregates/test_check", {:age=>30}).
@@ -40,22 +43,29 @@ describe CheckCluster do
     end
   end
 
-  def expect_ok(message)
-    expect(check).to receive(:ok)
-    expect(check).to receive(:send_payload).with(0, message).and_return(nil)
+  def expect_status(code, message)
+    expect(check).to receive(code)
+  end
 
-    # spec hack, original #ok method calls Kernel.exit but stubbed one doesn't
-    expect(check).to receive(:unknown)
+  def expect_payload(code, message)
+    expect(check).to receive(:send_payload).with(
+      Sensu::Plugin::EXIT_CODES[code.to_s.upcase], message).and_return(nil)
   end
 
   context "status" do
     context "should be OK" do
       it "when all is good" do
-        expect_ok "Aggregate looks GOOD"
+        expect_status :ok, "Aggregate looks GOOD"
+        expect_payload :ok, "Aggregate looks GOOD"
         check.run
       end
 
-      it "when check locked"
+      it "when check locked" do
+        redis.stub(:setnx).and_return 0
+        expect_status :ok, "123"
+        check.run
+      end
+
       it "when lock slipped"
     end
 
@@ -94,8 +104,9 @@ describe CheckCluster do
 
   # implementation details
   it "should run within a lock" do
-    expect_ok "Aggregate looks GOOD"
-    expect(locker).to receive(:run)
+    expect(redis).to receive(:setnx).and_return(1)
+    expect_status :ok, "Aggregate looks GOOD"
+    expect_payload :ok, "Aggregate looks GOOD"
     check.run
   end
 end

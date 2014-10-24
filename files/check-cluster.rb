@@ -43,7 +43,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     lock_key      = "lock:#{config[:cluster_name]}:#{config[:check]}"
     lock_interval = (cluster_check || target_check || {})[:interval] || 300
 
-    locker(self, redis, lock_key, lock_interval, logger).run do
+    locker(self, redis, lock_key, lock_interval, Time.now.to_i, logger).run do
       status, output = check_aggregate
       logger.puts output
       send_payload status, output
