@@ -42,7 +42,6 @@ class CheckCluster < Sensu::Plugin::Check::CLI
   def run
     lock_key      = "lock:#{config[:cluster_name]}:#{config[:check]}"
     lock_interval = (cluster_check || target_check || {})[:interval] || 300
-    logger        = defined?(IN_RSPEC) ? StringIO.new("") : $stdout
 
     locker(self, redis, lock_key, lock_interval, logger).run do
       status, output = check_aggregate
@@ -59,6 +58,10 @@ class CheckCluster < Sensu::Plugin::Check::CLI
 private
 
   EXIT_CODES = Sensu::Plugin::EXIT_CODES
+
+  def logger
+    $stdout
+  end
 
   def locker(*args)
     RedisLocker.new(*args)
