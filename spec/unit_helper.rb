@@ -2,6 +2,8 @@
 IN_RSPEC = true
 
 module Sensu
+  VERSION = "0.13"
+
   module Plugin
     EXIT_CODES = {
       'OK'       => 0,

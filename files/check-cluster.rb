@@ -40,10 +40,12 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :proc => proc {|a| a.to_i }
 
   def run
+    unknown "Sensu <0.13 is not supported" unless check_sensu_version
+
     lock_key      = "lock:#{config[:cluster_name]}:#{config[:check]}"
     lock_interval = (cluster_check || target_check || {})[:interval] || 300
 
-    locker(self, redis, lock_key, lock_interval, Time.now.to_i, logger).run do
+    locked_run(self, redis, lock_key, lock_interval, Time.now.to_i, logger) do
       status, output = check_aggregate
       logger.puts output
       send_payload status, output
@@ -57,14 +59,19 @@ class CheckCluster < Sensu::Plugin::Check::CLI
 
 private
 
+  def check_sensu_version
+    # good enough
+    Sensu::VERSION.split('.')[1].to_i > 12
+  end
+
   EXIT_CODES = Sensu::Plugin::EXIT_CODES
 
   def logger
     $stdout
   end
 
-  def locker(*args)
-    RedisLocker.new(*args)
+  def locked_run(*args, &block)
+    RedisLocker.new(*args).run(&block)
   end
 
   def redis
@@ -77,7 +84,7 @@ private
     issued = api_request(path, :age => 30)
     time   = issued.sort.last
 
-    return EXIT_CODES['WARNING'], "No aggregates older than #{config[:age]} seconds" unless time
+    return EXIT_CODES['WARNING'], "No aggregates older than 30 seconds" unless time
 
     aggregate = api_request("#{path}/#{time}")
     check_thresholds(aggregate) { |status, msg| return status, msg }
