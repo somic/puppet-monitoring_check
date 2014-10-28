@@ -82,12 +82,12 @@ private
 
   def check_aggregate
     path   = "/aggregates/#{config[:check]}"
-    issued = api_request(path, :age => 30)
+    issued = api.request(path, :age => 30)
     time   = issued.sort.last
 
     return EXIT_CODES['WARNING'], "No aggregates older than 30 seconds" unless time
 
-    aggregate = api_request("#{path}/#{time}")
+    aggregate = api.request("#{path}/#{time}")
     check_thresholds(aggregate) { |status, msg| return status, msg }
     # check_pattern(aggregate) { |status, msg| return status, msg }
 
@@ -109,23 +109,9 @@ private
     end
   end
 
-  def api_request(path, opts={})
-    api = sensu_settings[:api]
-    uri = URI("http://#{api[:host]}:#{api[:port]}#{path}")
-    uri.query = URI.encode_www_form(opts)
-
-    req = Net::HTTP::Get.new(uri)
-    req.basic_auth api[:user], api[:password]
-
-    res = Net::HTTP.start(uri.hostname, uri.port) do |http|
-      http.request(req)
-    end
-
-    if res.is_a?(Net::HTTPSuccess)
-      JSON.parse(res.body)
-    else
-      raise "Error querying sensu api: #{res.code} '#{res.body}'"
-    end
+  def api
+    @api ||= SensuApi.new(
+      *sensu_settings[:api].values_at(:host, :port, :user, :password))
   end
 
   def sensu_settings
@@ -238,5 +224,34 @@ class TinyRedisClient
 
   def close
     @socket.close
+  end
+end
+
+class SensuApi
+  attr_accessor :host, :port, :user, :password
+
+  def initialize(host, port, user=nil, password=nil)
+    @host = host
+    @port = port
+    @user = user
+    @password = password
+  end
+
+  def request(path, opts={})
+    uri = URI("http://#{host}:#{port}#{path}")
+    uri.query = URI.encode_www_form(opts)
+
+    req = Net::HTTP::Get.new(uri)
+    req.basic_auth(user, password) if user && password
+
+    res = Net::HTTP.start(uri.hostname, uri.port) do |http|
+      http.request(req)
+    end
+
+    if res.is_a?(Net::HTTPSuccess)
+      JSON.parse(res.body)
+    else
+      raise "Error querying sensu api: #{res.code} '#{res.body}'"
+    end
   end
 end

@@ -11,7 +11,9 @@ describe CheckCluster do
 
   let(:sensu_settings) do
     { :checks => { :test_cluster_test_check => { },
-                   :test_check => { } } }
+                   :test_check => { } },
+      :api => { :host => 'localhost',
+                :port => '9999' } }
   end
 
   let(:redis)  do
@@ -26,6 +28,18 @@ describe CheckCluster do
 
   let(:logger) { StringIO.new("") }
 
+  let(:api) do
+    double(:api).tap do |api|
+      api.stub(:request).
+        with("/aggregates/test_check", {:age=>30}).
+        and_return([1, 2, 3])
+
+      api.stub(:request).
+        with("/aggregates/test_check/3").
+        and_return('ok' => 1, 'total' => 1)
+    end
+  end
+
   let(:check) do
     CheckCluster.new.tap do |check|
       check.stub(
@@ -33,15 +47,8 @@ describe CheckCluster do
         :sensu_settings => sensu_settings,
         :redis          => redis,
         :logger         => logger,
+        :api            => api,
         :unknown        => nil)
-
-      check.stub(:api_request).
-        with("/aggregates/test_check", {:age=>30}).
-        and_return([1, 2, 3])
-
-      check.stub(:api_request).
-        with("/aggregates/test_check/3").
-        and_return('ok' => 1, 'total' => 1)
     end
   end
 
@@ -112,7 +119,7 @@ describe CheckCluster do
   context "payload" do
     context "should be WARNING" do
       it "when no old-enough aggregates" do
-        expect(check).to receive(:api_request).
+        expect(api).to receive(:request).
           with("/aggregates/test_check", {:age=>30}).and_return([])
 
         expect(check.send :check_aggregate).to(
