@@ -9,6 +9,7 @@ require 'net/http'
 if !defined?(IN_RSPEC)
   require 'rubygems'
   require 'sensu'
+  require 'sensu/constants' # version is here
   require 'sensu/settings'
   require 'sensu-plugin/check/cli'
   require 'json'
