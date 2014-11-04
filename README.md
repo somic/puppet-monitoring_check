@@ -25,10 +25,21 @@ monitoring_check { 'cron':
 }
 ```
 
-##Parameters
+## Parameters
 
 Please see `init.pp` for a full list of parameters. They are documented
 in the standard puppet doc format.
+
+## Team Data JSON
+
+By default, monitoring_check will expose the Team Data as JSON in 
+`/etc/sensu/team_data.json` by accessing the `team_data` key. This file is
+designed to be used by non-puppet clients, to help with validation.
+
+However, it could potentially contain sensitive information. It can be disabled by
+setting `monitoring_check::params::expose_team_data` to false.
+
+*Note*: Team data is always exposed on the sensu-server.
 
 ## Limitations / Explanation
 
