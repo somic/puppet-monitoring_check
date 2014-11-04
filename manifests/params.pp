@@ -24,11 +24,14 @@ class monitoring_check::params (
   validate_bool($expose_team_data)
   validate_hash($team_data)
   if $expose_team_data {
-    file { '/etc/sensu/teams.json':
+    $team_data_hash = {
+      'team_data' => $team_data
+    }
+    file { '/etc/sensu/team_data.json':
       owner   => 'sensu',
       group   => 'sensu',
       mode    => '0444',
-      content => inline_template('<%= require "json"; JSON.generate @team_data %>'),
+      content => inline_template('<%= require "json"; JSON.generate @team_data_hash %>'),
     }
   }
 

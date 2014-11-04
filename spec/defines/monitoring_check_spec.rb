@@ -52,8 +52,8 @@ describe 'monitoring_check' do
             "notification_email"=>"undef"
           })
       end
-      it { should contain_file('/etc/sensu/teams.json').with_content(/other/) }
-      it { should contain_file('/etc/sensu/teams.json').with_content(/operations/) }
+      it { should contain_file('/etc/sensu/team_data.json').with_content(/other/) }
+      it { should contain_file('/etc/sensu/team_data.json').with_content(/operations/) }
     end
 
     context "bad runbook (not a uri)" do
