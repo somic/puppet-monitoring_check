@@ -1,1 +1,15 @@
-spec/fixtures/modules/
+# Bundler
+/.bundle/
+/bin/
+/bundle/
+/vendor/gems/
+
+# Librarian-Puppet
+/.librarian/
+/.tmp/
+/fixtures/
+
+# Vagrant
+.vagrant
+
+/spec/fixtures/modules/

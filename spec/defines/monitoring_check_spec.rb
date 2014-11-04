@@ -1,6 +1,13 @@
 require 'spec_helper'
 
 describe 'monitoring_check' do
+
+  # Use let! to force the function to be initialize before it is lazily loaded
+  let!(:annotation_guess) { MockFunction.new('annotation_guess') { |f|
+      f.stubs(:call).with([]).returns('mock_annotation')
+    }
+  }
+
   context 'without teams data' do
     let(:title) { 'examplecheck' }
     let(:hiera_data) {{ :'sensu_handlers::teams' => { } }}
@@ -38,7 +45,7 @@ describe 'monitoring_check' do
             "project"=>false,
             "alert_after"=>"0",
             "page"=>true,
-            "annotation"=>"annotation:1",
+            "annotation"=>"mock_annotation",
             "realert_every"=>"-1",
             "sla"=>"No SLA defined.",
             "team"=>"operations",
@@ -70,7 +77,7 @@ describe 'monitoring_check' do
         "realert_every"=>"-1",
         "sla"=>"No SLA defined.",
         "team"=>"other",
-        "annotation"=>"annotation:1",
+        "annotation"=>"mock_annotation",
         "notification_email"=>"undef"})
       }
     end
@@ -96,7 +103,7 @@ describe 'monitoring_check' do
         "sla"=>"No SLA defined.",
         "team"=>"operations",
         "notification_email"=>"undef",
-        "annotation"=>"annotation:1"})
+        "annotation"=>"mock_annotation"})
       }
     end
 
@@ -115,7 +122,7 @@ describe 'monitoring_check' do
         "sla"=>"No SLA defined.",
         "team"=>"operations",
         "notification_email"=>"undef",
-        "annotation"=>"annotation:1"
+        "annotation"=>"mock_annotation"
       })}
     end
 
@@ -135,7 +142,7 @@ describe 'monitoring_check' do
           "sla"=>"No SLA defined.",
           "team"=>"operations",
           "notification_email"=>"undef",
-          "annotation"=>"annotation:1"
+          "annotation"=>"mock_annotation"
         }
       )}
     end
@@ -155,7 +162,7 @@ describe 'monitoring_check' do
         "sla"=>"No SLA defined.",
         "team"=>"overridden",
         "notification_email"=>"undef",
-        "annotation"=>"annotation:1"
+        "annotation"=>"mock_annotation"
         }
       )}
     end
@@ -174,7 +181,7 @@ describe 'monitoring_check' do
           "realert_every"=>"-1",
           "sla"=>"No SLA defined.",
           "team"=>"operations",
-          "annotation"=>"annotation:1",
+          "annotation"=>"mock_annotation",
           "notification_email"=>"undef"
         }
       )}
@@ -194,7 +201,7 @@ describe 'monitoring_check' do
           "realert_every"=>"-1",
           "sla"=>"custom SLA",
           "team"=>"operations",
-          "annotation"=>"annotation:1",
+          "annotation"=>"mock_annotation",
           "notification_email"=>"undef"
         }
       )}
@@ -240,9 +247,8 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_timeout(3600) }
     end
 
-
-
   end
+
 end
 
 

@@ -115,7 +115,7 @@
 define monitoring_check (
     $command,
     $runbook,
-    $annotation            = annotate(),
+    $annotation            = annotation_guess(),
     $check_every           = '1m',
     $timeout               = undef,
     $alert_after           = '0s',

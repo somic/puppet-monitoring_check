@@ -116,6 +116,7 @@ GEM
     rspec-mocks (2.14.6)
     rspec-puppet (1.0.1)
       rspec
+    rspec-puppet-utils (2.0.4)
     rspec-system (2.8.0)
       fog (~> 1.18)
       kwalify (~> 0.7.2)
@@ -161,6 +162,7 @@ DEPENDENCIES
   rake
   rspec (~> 2.14.1)
   rspec-puppet
+  rspec-puppet-utils
   rspec-system-puppet
   travis
   travis-lint
