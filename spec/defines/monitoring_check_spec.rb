@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'monitoring_check' do
   context 'without teams data' do
     let(:title) { 'examplecheck' }
-    let(:hiera_data) { { :sensu_enabled => true, :'sensu_handlers::teams' => { } } }
+    let(:hiera_data) {{ :'sensu_handlers::teams' => { } }}
     let(:facts) { { :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
 
     let(:default_interval) { 60 }
@@ -16,7 +16,7 @@ describe 'monitoring_check' do
   end
   context 'with teams data' do
     let(:title) { 'examplecheck' }
-    let(:hiera_data) { { :sensu_enabled => true, :'sensu_handlers::teams' => { 'operations' => {}, 'other' => {}} } }
+    let(:hiera_data) {{ :'sensu_handlers::teams' => { 'operations' => {}, 'other' => {}} }}
     let(:facts) { { :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
 
     let(:default_interval) { 60 }
@@ -45,6 +45,8 @@ describe 'monitoring_check' do
             "notification_email"=>"undef"
           })
       end
+      it { should contain_file('/etc/sensu/teams.json').with_content(/other/) }
+      it { should contain_file('/etc/sensu/teams.json').with_content(/operations/) }
     end
 
     context "bad runbook (not a uri)" do
