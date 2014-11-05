@@ -14,7 +14,7 @@
 #  Hash of team data from sensu_handlers so we can validate incoming teams.
 #
 class monitoring_check::params (
-  $expose_team_data = true,
+  $expose_team_data = hiera('sensu_enabled', true),
   # Pull the team data configuration from the sensu_handlers module in order
   # to validate the given inputs.
   $team_data = hiera('sensu_handlers::teams', {})
