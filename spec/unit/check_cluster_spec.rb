@@ -28,15 +28,21 @@ describe CheckCluster do
 
   let(:logger) { StringIO.new("") }
 
-  let(:api) do
-    double(:api).tap do |api|
-      api.stub(:request).
-        with("/aggregates/test_check", {:age=>30}).
-        and_return([1, 2, 3])
+  # let(:api) do
+  #   double(:api).tap do |api|
+  #     api.stub(:request).
+  #       with("/aggregates/test_check", {:age=>30}).
+  #       and_return([1, 2, 3])
 
-      api.stub(:request).
-        with("/aggregates/test_check/3").
-        and_return('ok' => 1, 'total' => 1)
+  #     api.stub(:request).
+  #       with("/aggregates/test_check/3").
+  #       and_return('ok' => 1, 'total' => 1)
+  #   end
+  # end
+
+  let(:aggregator) do
+    double(:aggregator).tap do |agg|
+      agg.stub(:summary).and_return({:total => 1, :ok => 1, :active => 1})
     end
   end
 
@@ -47,7 +53,7 @@ describe CheckCluster do
         :sensu_settings => sensu_settings,
         :redis          => redis,
         :logger         => logger,
-        :api            => api,
+        :aggregator     => aggregator,
         :unknown        => nil)
     end
   end
@@ -64,8 +70,8 @@ describe CheckCluster do
   context "status" do
     context "should be OK" do
       it "when all is good" do
-        expect_status :ok, "Check executed successfully"
-        expect_payload :ok, "Aggregate looks GOOD"
+        expect_status :ok, /Check executed successfully/
+        expect_payload :ok, /0%/
         check.run
       end
 
@@ -119,15 +125,12 @@ describe CheckCluster do
   context "payload" do
     context "should be WARNING" do
       it "when no old-enough aggregates" do
-        expect(api).to receive(:request).
-          with("/aggregates/test_check", {:age=>30}).and_return([])
-
-        expect(check.send :check_aggregate).to(
-          eq([1, "No aggregates older than 30 seconds"]))
+        expect(check.send :check_aggregate, :total => 0).to(
+          eq(["WARNING", "No active servers"]))
       end
 
       it "when reached warning threshold" do
-        check.send(:check_thresholds, 'ok' => 60, 'total' => 100) do |status, message|
+        check.send(:check_aggregate, :ok => 60, :total => 100) do |status, message|
           expect(status).to be(1)
           expect(message).to match(/40%/)
         end
@@ -136,7 +139,7 @@ describe CheckCluster do
 
     context "should be CRITICAL" do
       it "when reached critical threshold" do
-        check.send(:check_thresholds, 'ok' => 40, 'total' => 100) do |status, message|
+        check.send(:check_aggregate, :ok => 40, :total => 100) do |status, message|
           expect(status).to be(2)
           expect(message).to match(/60%/)
         end
@@ -147,13 +150,8 @@ describe CheckCluster do
   # implementation details
   it "should run within a lock" do
     expect(redis).to receive(:setnx).and_return(1)
-    expect_status :ok, "Check executed successfully"
-    expect_payload :ok, "Aggregate looks GOOD"
+    expect_status :ok, /Check executed successfully/
+    expect_payload :ok, /0%/
     check.run
-  end
-
-  it "should check_thresholds within check_aggregate" do
-    expect(check).to receive(:check_thresholds)
-    check.send :check_aggregate
   end
 end

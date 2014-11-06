@@ -43,14 +43,12 @@ class CheckCluster < Sensu::Plugin::Check::CLI
   def run
     unknown "Sensu <0.13 is not supported" unless check_sensu_version
 
-    lock_key      = "lock:#{config[:cluster_name]}:#{config[:check]}"
-    lock_interval = (cluster_check || target_check || {})[:interval] || 300
-
-    locked_run(self, redis, lock_key, lock_interval, Time.now.to_i, logger) do
-      status, output = check_aggregate
+    lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
+    locked_run(self, redis, lock_key, check_interval, Time.now.to_i, logger) do
+      status, output = check_aggregate(aggregator.summary(check_interval))
       logger.puts output
-      send_payload status, output
-      ok "Check executed successfully"
+      send_payload EXIT_CODES[status], output
+      ok "Check executed successfully (#{status}: #{output})"
     end
 
     unknown "Check didn't report status"
@@ -59,6 +57,14 @@ class CheckCluster < Sensu::Plugin::Check::CLI
   end
 
 private
+
+  def aggregator
+    RedisCheckAggregate.new(redis, config[:check])
+  end
+
+  def check_interval
+    (cluster_check || target_check || {})[:interval] || 300
+  end
 
   def check_sensu_version
     # good enough
@@ -76,43 +82,34 @@ private
   end
 
   def redis
-    redis_config = sensu_settings[:redis] or raise "Redis config not available"
-    TinyRedisClient.new(redis_config[:host], redis_config[:port])
-  end
-
-  def check_aggregate
-    path   = "/aggregates/#{config[:check]}"
-    issued = api.request(path, :age => 30)
-    time   = issued.sort.last
-
-    return EXIT_CODES['WARNING'], "No aggregates older than 30 seconds" unless time
-
-    aggregate = api.request("#{path}/#{time}")
-    check_thresholds(aggregate) { |status, msg| return status, msg }
-    # check_pattern(aggregate) { |status, msg| return status, msg }
-
-    return EXIT_CODES['OK'], "Aggregate looks GOOD"
-  end
-
-  # yielding means end of checking and sending payload to sensu
-  def check_thresholds(aggregate)
-    ok, total = aggregate.values_at("ok", "total")
-    nz_pct    = ((1 - ok.to_f / total.to_f) * 100).to_i
-    message   = "Number of non-zero results exceeds threshold (#{nz_pct}% non-zero)"
-
-    if config[:critical] && nz_pct >= config[:critical]
-      yield EXIT_CODES['CRITICAL'], message
-    elsif config[:warning] && nz_pct >= config[:warning]
-      yield EXIT_CODES['WARNING'], message
-    else
-      logger.puts "Number of non-zero results: #{ok}/#{total} #{nz_pct}% - OK"
+    @redis ||= begin
+      redis_config = sensu_settings[:redis] or raise "Redis config not available"
+      TinyRedisClient.new(redis_config[:host], redis_config[:port])
     end
   end
 
-  def api
-    @api ||= SensuApi.new(
-      *sensu_settings[:api].values_at(:host, :port, :user, :password))
+  def check_aggregate(summary)
+    total, ok = summary.values_at(:total, :ok)
+    return 'WARNING', 'No active servers' if total.zero?
+
+    nz_pct    = (100 * (total - ok) / total.to_f).to_i
+    message   = "Non-zero results: #{total-ok}/#{total} #{nz_pct}% " <<
+      "(C#{config[:critical] || '-'} W#{config[:warning] || '-'})"
+    state     = if config[:critical] && nz_pct >= config[:critical]
+      'CRITICAL'
+    elsif config[:warning] && nz_pct >= config[:warning]
+      'WARNING'
+    else
+      'OK'
+    end
+
+    return state, message
   end
+
+  # def api
+  #   @api ||= SensuApi.new(
+  #     *sensu_settings[:api].values_at(:host, :port, :user, :password))
+  # end
 
   def sensu_settings
     @sensu_settings ||=
@@ -227,31 +224,73 @@ class TinyRedisClient
   end
 end
 
-class SensuApi
-  attr_accessor :host, :port, :user, :password
+# class SensuApi
+#   attr_accessor :host, :port, :user, :password
 
-  def initialize(host, port, user=nil, password=nil)
-    @host = host
-    @port = port
-    @user = user
-    @password = password
+#   def initialize(host, port, user=nil, password=nil)
+#     @host = host
+#     @port = port
+#     @user = user
+#     @password = password
+#   end
+
+#   def request(path, opts={})
+#     uri = URI("http://#{host}:#{port}#{path}")
+#     uri.query = URI.encode_www_form(opts)
+
+#     req = Net::HTTP::Get.new(uri)
+#     req.basic_auth(user, password) if user && password
+
+#     res = Net::HTTP.start(uri.hostname, uri.port) do |http|
+#       http.request(req)
+#     end
+
+#     if res.is_a?(Net::HTTPSuccess)
+#       JSON.parse(res.body)
+#     else
+#       raise "Error querying sensu api: #{res.code} '#{res.body}'"
+#     end
+#   end
+# end
+
+class RedisCheckAggregate
+  def initialize(redis, check)
+    @check = check
+    @redis = redis
   end
 
-  def request(path, opts={})
-    uri = URI("http://#{host}:#{port}#{path}")
-    uri.query = URI.encode_www_form(opts)
+  def summary(interval)
+    all    = last_execution
+    active = all.select { |_, time| time.to_i >= Time.now.to_i - interval }
+    { :total => all.size, :ok => count_ok(active.keys), :active => active.size }
+  end
 
-    req = Net::HTTP::Get.new(uri)
-    req.basic_auth(user, password) if user && password
-
-    res = Net::HTTP.start(uri.hostname, uri.port) do |http|
-      http.request(req)
+  def count_ok(servers=nil)
+    (servers || find_servers).inject(0) do |sum, server|
+      sum + (@redis.lindex("history:#{server}:#@check", -1) == '0' ? 1 : 0)
     end
+  end
 
-    if res.is_a?(Net::HTTPSuccess)
-      JSON.parse(res.body)
-    else
-      raise "Error querying sensu api: #{res.code} '#{res.body}'"
+  # { server_name => timestamp, ... }
+  def last_execution(servers=nil)
+    (servers || find_servers).inject({}) do |hash, server|
+      hash[server] = @redis.get("execution:#{server}:#@check")
+      hash
     end
+  end
+
+  # { server_name => [old, ..., recent], ... }
+  def history(servers=nil)
+    (servers || find_servers).inject({}) do |hash, server|
+      hash[server] = @redis.lrange("history:#{server}:#@check", -100, -1)
+      hash
+    end
+  end
+
+  private
+
+  def find_servers
+    # TODO: reimplement using @redis.scan for webscale
+    @servers ||= @redis.keys("execution:*:#@check").map { |key| key.split(':')[1] }
   end
 end
