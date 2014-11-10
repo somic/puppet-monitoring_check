@@ -112,6 +112,16 @@
 # These will override any parameters configured by the wrapper.
 # Defaults to an empty hash.
 #
+# [*can_override*]
+# A boolean that defaults to true for if the $::override_sensu_checks_to
+# fact can be used to override the team (to 'noop') and the notification_email
+# parameter (to the value of $::override_sensu_checks_to). Defaults to true.
+#
+# This, by default allows you to set the $::override_sensu_checks_to fact
+# in /etc/facter/facts.d to stop checks on a single machine from alerting via the
+# normal mechanism. Setting this to false will stop this mechanism from applying
+# to a check.
+#
 define monitoring_check (
     $command,
     $runbook,
@@ -139,6 +149,7 @@ define monitoring_check (
     $high_flap_threshold   = undef,
     $aggregate             = false,
     $sensu_custom          = {},
+    $can_override          = true,
 ) {
 
   include monitoring_check::params
@@ -205,6 +216,16 @@ define monitoring_check (
     $real_command = $command
   }
 
+  if getvar('::override_sensu_checks_to') and $can_override {
+    $override_custom = {
+      'team'             => 'noop',
+      notification_email => $::override_sensu_checks_to,
+    }
+  }
+  else {
+    $override_custom = {}
+  }
+
   if str2bool($use_sensu) {
     sensu::check { $name:
       ensure              => $ensure,
@@ -216,7 +237,7 @@ define monitoring_check (
       high_flap_threshold => $low_flap_threshold,
       handle              => $handle,
       aggregate           => $aggregate,
-      custom              => merge({
+      custom              => merge(merge({
         alert_after           => $alert_after_s,
         realert_every         => $realert_every,
         runbook               => $runbook,
@@ -230,7 +251,7 @@ define monitoring_check (
         project               => $project,
         page                  => str2bool($page),
         tip                   => $tip,
-      }, $sensu_custom)
+      }, $override_custom), $sensu_custom)
     }
   }
   if str2bool($use_nagios) {

@@ -247,8 +247,46 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_timeout(3600) }
     end
 
+    context "with override_sensu_checks_to set and can_override true" do
+      let(:facts) { { :override_sensu_checks_to => 'custom@override', :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
+      let(:params) { {:command => 'bar', :runbook => 'http://gronk' } }
+      it { should contain_sensu__check('examplecheck').with_custom({
+        "runbook"=>"http://gronk",
+        "dependencies"=>[],
+        "ticket"=>false,
+        "irc_channels"=>:undef,
+        "tip"=>false,
+        "project"=>false,
+        "alert_after"=>"0",
+        "page"=>false,
+        "realert_every"=>"-1",
+        "sla"=>"No SLA defined.",
+        "team"=>"noop",
+        "notification_email"=>"custom@override",
+        "annotation"=>"mock_annotation"
+        }
+      )}
+    end
+    context "with override_sensu_checks_to set and can_override false" do
+      let(:facts) { { :override_sensu_checks_to => 'custom@override', :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
+      let(:params) { {:command => 'bar', :runbook => 'http://gronk', :can_override => false } }
+      it { should contain_sensu__check('examplecheck').with_custom({
+        "runbook"=>"http://gronk",
+        "dependencies"=>[],
+        "ticket"=>false,
+        "irc_channels"=>:undef,
+        "tip"=>false,
+        "project"=>false,
+        "alert_after"=>"0",
+        "page"=>false,
+        "realert_every"=>"-1",
+        "sla"=>"No SLA defined.",
+        "team"=>"operations",
+        "notification_email"=>"undef",
+        "annotation"=>"mock_annotation"
+        }
+      )}
+    end
   end
-
 end
-
 
