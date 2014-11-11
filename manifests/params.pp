@@ -35,4 +35,15 @@ class monitoring_check::params (
     }
   }
 
+  if getvar('::override_sensu_checks_to') {
+    # This fact can be dropped in by outside tools.
+    # If it exists, lets ensure the file so it sticks around and is not purged.
+    file { '/etc/facter/facts.d/override_sensu_checks_to.txt':
+      ensure => 'file',
+      owner  => 'root',
+      group  => 'root',
+      mode   => '0644',
+    }
+  }
+
 }
