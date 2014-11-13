@@ -40,6 +40,13 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "PERCENT non-ok before critical",
     :proc => proc {|a| a.to_i }
 
+  option :silenced,
+    :short => "-S PERCENT",
+    :long => "--silenced PERCENT",
+    :description => "Percent of silenced hosts to take into account",
+    :proc => proc {|a| a.to_i },
+    :default => 100
+
   def run
     unknown "Sensu <0.13 is not supported" unless check_sensu_version
 
@@ -88,12 +95,20 @@ private
     end
   end
 
+  # accept summary:
+  #   total:    all server that had ran the check in the past
+  #   active:   servers that had ran the check within *interval* seconds
+  #   ok:       number of *active* servers with check status OK
+  #   silenced: number of *total* servers that are silenced or have
+  #             target check silenced
   def check_aggregate(summary)
-    total, ok = summary.values_at(:total, :ok)
-    return 'WARNING', 'No active servers' if total.zero?
+    total, ok, active, silenced = summary.values_at(:total, :ok, :active, :silenced)
+    return 'WARNING', 'No servers running the check' if total.zero?
+    return 'CRITICAL', 'No active servers' if active.zero?
 
-    nz_pct    = (100 * (total - ok) / total.to_f).to_i
-    message   = "Non-zero results: #{total-ok}/#{total} #{nz_pct}% " <<
+    eff_total = active - (silenced * config[:silenced] / 100)
+    nz_pct    = (100 * (eff_total - ok) / eff_total.to_f).to_i
+    message   = "Non-zero results: #{eff_total-ok}/#{eff_total} #{nz_pct}% " <<
       "(C#{config[:critical] || '-'} W#{config[:warning] || '-'})"
     state     = if config[:critical] && nz_pct >= config[:critical]
       'CRITICAL'
@@ -260,34 +275,28 @@ class RedisCheckAggregate
   end
 
   def summary(interval)
-    all    = last_execution
-    active = all.select { |_, time| time.to_i >= Time.now.to_i - interval }
-    { :total => all.size, :ok => count_ok(active.keys), :active => active.size }
+    all     = last_execution find_servers
+    active  = all.select { |_, time| time.to_i >= Time.now.to_i - interval }
+    { :total    => all.size,
+      :active   => active.size,
+      :ok       => active.count do |srv, _|
+        @redis.lindex("history:#{server}:#@check", -1) == '0'
+      end,
+      :silenced => all.count do |srv, time|
+        %w{stash:silence/#{srv} stash:silence/#{srv}/#{@check}}.
+          any? {|key| @redis.get(key) }
+      end }
   end
 
-  def count_ok(servers=nil)
-    (servers || find_servers).inject(0) do |sum, server|
-      sum + (@redis.lindex("history:#{server}:#@check", -1) == '0' ? 1 : 0)
-    end
-  end
+  private
 
   # { server_name => timestamp, ... }
-  def last_execution(servers=nil)
-    (servers || find_servers).inject({}) do |hash, server|
+  def last_execution(servers)
+    servers.inject({}) do |hash, server|
       hash[server] = @redis.get("execution:#{server}:#@check")
       hash
     end
   end
-
-  # { server_name => [old, ..., recent], ... }
-  def history(servers=nil)
-    (servers || find_servers).inject({}) do |hash, server|
-      hash[server] = @redis.lrange("history:#{server}:#@check", -100, -1)
-      hash
-    end
-  end
-
-  private
 
   def find_servers
     # TODO: reimplement using @redis.scan for webscale
