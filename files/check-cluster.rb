@@ -28,12 +28,6 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "Aggregate CHECK name",
     :required => true
 
-  option :warning,
-    :short => "-W PERCENT",
-    :long => "--warning PERCENT",
-    :description => "PERCENT non-ok before warning",
-    :proc => proc {|a| a.to_i }
-
   option :critical,
     :short => "-C PERCENT",
     :long => "--critical PERCENT",
@@ -41,11 +35,11 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :proc => proc {|a| a.to_i }
 
   option :silenced,
-    :short => "-S PERCENT",
-    :long => "--silenced PERCENT",
-    :description => "Percent of silenced hosts to take into account",
-    :proc => proc {|a| a.to_i },
-    :default => 100
+    :short => "-S BOOL",
+    :long => "--silenced BOOL",
+    :description => "Include silenced hosts in total",
+    :proc => proc {|a| %w{1 yes y true t}.include? "#{a}".downcase },
+    :default => false
 
   def run
     unknown "Sensu <0.13 is not supported" unless check_sensu_version
@@ -102,18 +96,17 @@ private
   #   silenced: number of *total* servers that are silenced or have
   #             target check silenced
   def check_aggregate(summary)
-    total, ok, active, silenced = summary.values_at(:total, :ok, :active, :silenced)
-    return 'WARNING', 'No servers running the check' if total.zero?
-    return 'CRITICAL', 'No active servers' if active.zero?
+    total, ok, silenced = summary.values_at(:total, :ok, :silenced)
+    return 'OK', 'No servers running the check' if total.zero?
 
-    eff_total = active - (silenced * config[:silenced] / 100)
-    nz_pct    = (100 * (eff_total - ok) / eff_total.to_f).to_i
-    message   = "Non-zero results: #{eff_total-ok}/#{eff_total} #{nz_pct}% " <<
-      "(C#{config[:critical] || '-'} W#{config[:warning] || '-'})"
-    state     = if config[:critical] && nz_pct >= config[:critical]
+    eff_total = total - silenced * (config[:silenced] ? 1 : 0)
+    return 'OK', 'All hosts silenced' if eff_total.zero?
+
+    nz_pct  = (100 * (eff_total - ok) / eff_total.to_f).to_i
+    message = "#{eff_total-ok} OK out of #{eff_total} total." <<
+              " (#{nz_pct}%, which is less than #{config[:critical]})"
+    state   = if config[:critical] && nz_pct >= config[:critical]
       'CRITICAL'
-    elsif config[:warning] && nz_pct >= config[:warning]
-      'WARNING'
     else
       'OK'
     end
@@ -190,11 +183,12 @@ class RedisLocker
         status.critical "Releasing lock due to error: #{e} #{e.backtrace}"
         raise e
       end
-    elsif lock_value = redis.get(key)
-      if (ttl = now - lock_value.to_i) > interval
-        status.warning "Lock problem: #{now} - #{lock_value} > #{interval}, expired immediately"
+    elsif locked_at = redis.get(key).to_i
+      if (time_alive = now - locked_at) > interval
+        expire
+        status.warning "Lock problem: #{now} - #{locked_at} > #{interval}, expired immediately"
       else
-        status.ok "Lock expires in #{interval - ttl} seconds"
+        status.ok "Lock expires in #{interval - time_alive} seconds"
       end
     else
       status.ok "Lock slipped away"
