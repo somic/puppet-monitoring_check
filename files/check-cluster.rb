@@ -91,7 +91,6 @@ private
 
   # accept summary:
   #   total:    all server that had ran the check in the past
-  #   active:   servers that had ran the check within *interval* seconds
   #   ok:       number of *active* servers with check status OK
   #   silenced: number of *total* servers that are silenced or have
   #             target check silenced
@@ -103,14 +102,12 @@ private
     return 'OK', 'All hosts silenced' if eff_total.zero?
 
     nz_pct  = (100 * (eff_total - ok) / eff_total.to_f).to_i
-    message = "#{eff_total-ok} OK out of #{eff_total} total." <<
-              " (#{nz_pct}%, which is less than #{config[:critical]})"
-    state   = if config[:critical] && nz_pct >= config[:critical]
-      'CRITICAL'
-    else
-      'OK'
-    end
 
+    message = "#{eff_total-ok} OK out of #{eff_total} total."
+    message << " #{silenced} silenced." if config[:silenced] && silenced > 0
+    message << " (#{nz_pct}%, which is not more than #{config[:critical]}%)"
+
+    state   = nz_pct >= config[:critical] ? 'CRITICAL' : 'OK'
     return state, message
   end
 
@@ -272,13 +269,12 @@ class RedisCheckAggregate
     all     = last_execution find_servers
     active  = all.select { |_, time| time.to_i >= Time.now.to_i - interval }
     { :total    => all.size,
-      :active   => active.size,
       :ok       => active.count do |server, _|
         @redis.lindex("history:#{server}:#@check", -1) == '0'
       end,
       :silenced => all.count do |server, time|
-        %w{stash:silence/#{server} stash:silence/#{server}/#{@check}}.
-          any? {|key| @redis.get(key) }
+        %W{ stash:silence/#{server} stash:silence/#@check
+            stash:silence/#{server}/#@check }.any? {|key| @redis.get(key) }
       end }
   end
 
