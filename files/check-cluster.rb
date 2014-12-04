@@ -273,11 +273,11 @@ class RedisCheckAggregate
     active  = all.select { |_, time| time.to_i >= Time.now.to_i - interval }
     { :total    => all.size,
       :active   => active.size,
-      :ok       => active.count do |srv, _|
+      :ok       => active.count do |server, _|
         @redis.lindex("history:#{server}:#@check", -1) == '0'
       end,
-      :silenced => all.count do |srv, time|
-        %w{stash:silence/#{srv} stash:silence/#{srv}/#{@check}}.
+      :silenced => all.count do |server, time|
+        %w{stash:silence/#{server} stash:silence/#{server}/#{@check}}.
           any? {|key| @redis.get(key) }
       end }
   end
