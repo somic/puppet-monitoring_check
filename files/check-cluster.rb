@@ -35,10 +35,9 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :proc => proc {|a| a.to_i }
 
   option :silenced,
-    :short => "-S BOOL",
-    :long => "--silenced BOOL",
+    :short => "-S yes",
+    :long => "--silenced yes",
     :description => "Include silenced hosts in total",
-    :proc => proc {|a| %w{1 yes y true t}.include? "#{a}".downcase },
     :default => false
 
   def run
