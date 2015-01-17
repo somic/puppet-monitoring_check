@@ -140,7 +140,6 @@ define monitoring_check (
     $needs_sudo            = false,
     $sudo_user             = 'root',
     $team                  = 'operations',
-    $ensure                = 'present',
     $dependencies          = [],
     $use_sensu             = hiera('sensu_enabled', true),
     $use_nagios            = false,
@@ -159,7 +158,6 @@ define monitoring_check (
   # https://github.com/sensu/sensu/blob/master/lib/sensu/settings.rb#L215
   validate_re($name, '^[\w\.-]+$', "Your sensu check name has special chars sensu won't like: ${name}" )
 
-  validate_re($ensure, '^(present|absent)$')
   validate_string($command)
   validate_string($runbook)
   validate_re($runbook, '^(https?://|y/)')
@@ -228,7 +226,6 @@ define monitoring_check (
 
   if str2bool($use_sensu) {
     sensu::check { $name:
-      ensure              => $ensure,
       handlers            => 'default', # Always use the default handler, it'll route things via escalation_team
       command             => $real_command,
       interval            => $interval_s,

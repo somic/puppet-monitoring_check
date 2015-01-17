@@ -30,13 +30,11 @@ define monitoring_check::cluster (
     $sla                   = undef,
     $page                  = undef,
     $team                  = undef,
-    $ensure                = undef,
     $dependencies          = undef
 ) {
   require monitoring_check::check_cluster_install
 
   monitoring_check { "${cluster}_${name}":
-    ensure              => $ensure,
     command             => "/etc/sensu/plugins/check-cluster.rb  -N ${cluster} -c ${check} ${command_add}",
     runbook             => $runbook,
     annotation          => $annotation,
