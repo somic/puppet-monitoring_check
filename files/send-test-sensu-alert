@@ -1,0 +1,42 @@
+#!/bin/bash
+
+DOMAIN=`hostname -d`
+
+cat <<EOF >/tmp/test-sensu-alert.json
+{
+  "name": "test_alert_for_${USER}",
+  "interval": 0,
+  "alert_after": 0,
+  "realert_every": "1",
+  "runbook": "unknown",
+  "annotation": "unknown",
+  "sla": "No SLA defined.",
+  "dependencies": [],
+  "team": "noop",
+  "irc_channels": [],
+  "notification_email": "${USER}@${DOMAIN}",
+  "ticket": false,
+  "project": false,
+  "page": false,
+  "tip": "this is a test alert",
+  "output": "Test output from send-test-sensu-alert",
+  "status": 2,
+  "command": "send-test-sensu-alert",
+  "watchdog_timer": null
+}
+EOF
+
+$EDITOR /tmp/test-sensu-alert.json
+if [[ $? -eq 0 ]]; then
+
+  if cat  /tmp/test-sensu-alert.json | tr -d "\n" | jq . > /dev/null ; then
+    echo "Sending the alert to the localhost:3030 socket!"
+    cat /tmp/test-sensu-alert.json | tr -d "\n"  > /dev/tcp/localhost/3030
+    echo
+    echo "Resolve your check with:"
+    echo "sensu-cli resolve `hostname -f` `cat /tmp/test-sensu-alert.json  | jq .'name'`"
+  else
+    echo "Error: Invalid JSON?"
+  fi
+
+fi
