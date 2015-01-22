@@ -13,11 +13,16 @@
 # [*team_data*]
 #  Hash of team data from sensu_handlers so we can validate incoming teams.
 #
+# [*bin_path*]
+#  String to represent where to stick binaries that puppet deploys. Defaults
+#  to '/usr/bin'
+#
 class monitoring_check::params (
   $expose_team_data = hiera('sensu_enabled', true),
   # Pull the team data configuration from the sensu_handlers module in order
   # to validate the given inputs.
-  $team_data = hiera('sensu_handlers::teams', {})
+  $team_data = hiera('sensu_handlers::teams', {}),
+  $bin_path = '/usr/bin',
 ) {
 
   # Expose the team metadata as json for other tools to validate against
@@ -44,6 +49,14 @@ class monitoring_check::params (
       group  => 'root',
       mode   => '0644',
     }
+  }
+
+  file { "${bin_path}/send-test-sensu-alert":
+    ensure => 'file',
+    mode   => '0555',
+    owner  => 'root',
+    group  => 'root',
+    source => 'puppet:///modules/monitoring_check/send-test-sensu-alert',
   }
 
 }

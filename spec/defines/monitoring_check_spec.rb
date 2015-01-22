@@ -9,6 +9,7 @@ describe 'monitoring_check' do
   }
 
   context 'without teams data' do
+    let(:pre_condition) { 'include sensu' }
     let(:title) { 'examplecheck' }
     let(:hiera_data) {{ :'sensu_handlers::teams' => { } }}
     let(:facts) { { :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
@@ -22,6 +23,7 @@ describe 'monitoring_check' do
       end
   end
   context 'with teams data' do
+    let(:pre_condition) { 'include sensu' }
     let(:title) { 'examplecheck' }
     let(:hiera_data) {{ :'sensu_handlers::teams' => { 'operations' => {}, 'other' => {}} }}
     let(:facts) { { :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
