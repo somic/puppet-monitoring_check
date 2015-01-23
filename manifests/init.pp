@@ -102,11 +102,6 @@
 # Defaults to unset
 # See http://nagios.sourceforge.net/docs/3_0/flapping.html for more details
 #
-# [*aggregate*]
-# Boolean that configures the check to not be handled, and instead go to the
-# aggregates api, which is used for "cluster" checks. Notification parameters
-# have no effect, as handle:false for these.
-#
 # [*sensu_custom*]
 # A hash of custom parameters to inject into the sensu check JSON output.
 # These will override any parameters configured by the wrapper.
@@ -169,11 +164,6 @@ define monitoring_check (
   validate_re($team, "^(${team_names})$")
   validate_bool($ticket)
 
-  validate_bool($aggregate)
-  # Make $handle be the inverse of aggregate.
-  # If we are aggregate, we do not handle them.
-  $handle = $aggregate ? { true => false, false => true }
-
   validate_hash($sensu_custom)
   validate_hash($nagios_custom)
 
@@ -232,8 +222,6 @@ define monitoring_check (
       timeout             => $timeout_s,
       low_flap_threshold  => $high_flap_threshold,
       high_flap_threshold => $low_flap_threshold,
-      handle              => $handle,
-      aggregate           => $aggregate,
       dependencies        => any2array($dependencies),
       custom              => merge(merge({
         alert_after           => $alert_after_s,

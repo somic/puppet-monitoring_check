@@ -39,19 +39,18 @@ describe 'monitoring_check' do
           .with_interval(default_interval) \
           .with_command('bar') \
           .with_custom({
-            "runbook"=>"http://gronk",
-            "dependencies"=>[],
-            "ticket"=>false,
-            "irc_channels"=>:undef,
-            "tip"=>false,
-            "project"=>false,
             "alert_after"=>"0",
-            "page"=>true,
-            "annotation"=>"mock_annotation",
             "realert_every"=>"-1",
+            "runbook"=>"http://gronk",
+            "annotation"=>"mock_annotation",
             "sla"=>"No SLA defined.",
             "team"=>"operations",
-            "notification_email"=>"undef"
+            "irc_channels"=>:undef,
+            "notification_email"=>"undef",
+            "ticket"=>false,
+            "project"=>false,
+            "page"=>true,
+            "tip"=>false,
           })
       end
       it { should contain_file('/etc/sensu/team_data.json').with_content(/other/) }
@@ -69,7 +68,6 @@ describe 'monitoring_check' do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :team => 'other'} }
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"=>"http://gronk",
-        "dependencies"=>[],
         "ticket"=>false,
         "irc_channels"=>:undef,
         "tip"=>false,
@@ -92,47 +90,13 @@ describe 'monitoring_check' do
     end
     context "with one dependency" do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :dependencies => 'dep1'} }
-      it { should contain_sensu__check('examplecheck').with_custom({
-        "runbook"=>"http://gronk",
-        "dependencies"=>["dep1"],
-        "ticket"=>false,
-        "irc_channels"=>:undef,
-        "tip"=>false,
-        "project"=>false,
-        "alert_after"=>"0",
-        "page"=>false,
-        "realert_every"=>"-1",
-        "sla"=>"No SLA defined.",
-        "team"=>"operations",
-        "notification_email"=>"undef",
-        "annotation"=>"mock_annotation"})
-      }
-    end
-
-    context "with two dependency" do
-      let(:params) { {:command => 'bar', :runbook => 'http://gronk', :dependencies => ['dep1', 'dep2']} }
-      it { should contain_sensu__check('examplecheck').with_custom({
-        "runbook"=>"http://gronk",
-        "dependencies"=> ["dep1","dep2"],
-        "ticket"=>false,
-        "irc_channels"=>:undef,
-        "tip"=>false,
-        "project"=>false,
-        "alert_after"=>"0",
-        "page"=>false,
-        "realert_every"=>"-1",
-        "sla"=>"No SLA defined.",
-        "team"=>"operations",
-        "notification_email"=>"undef",
-        "annotation"=>"mock_annotation"
-      })}
+      it { should contain_sensu__check('examplecheck').with_dependencies(['dep1']) }
     end
 
     context "with custom" do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :sensu_custom => { 'foo' => 'bar' } } }
       it { should contain_sensu__check('examplecheck').with_custom({
           "runbook"=>"http://gronk",
-          "dependencies"=>[],
           "ticket"=>false,
           "irc_channels"=>:undef,
           "tip"=>false,
@@ -153,7 +117,6 @@ describe 'monitoring_check' do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :sensu_custom => { 'team' => 'overridden' } } }
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"=>"http://gronk",
-        "dependencies"=>[],
         "ticket"=>false,
         "irc_channels"=>:undef,
         "tip"=>false,
@@ -173,7 +136,6 @@ describe 'monitoring_check' do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => 'false'} }
       it { should contain_sensu__check('examplecheck').with_custom({
           "runbook"=>"http://gronk",
-          "dependencies"=>[],
           "ticket"=>false,
           "irc_channels"=>:undef,
           "tip"=>false,
@@ -193,7 +155,6 @@ describe 'monitoring_check' do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => 'false', :sla=>'custom SLA'} }
       it { should contain_sensu__check('examplecheck').with_custom({
           "runbook"=>"http://gronk",
-          "dependencies"=>[],
           "ticket"=>false,
           "irc_channels"=>:undef,
           "tip"=>false,
@@ -223,17 +184,6 @@ describe 'monitoring_check' do
       it { expect { should compile }.to raise_error() }
     end
 
-    context "Aggregate Checks" do
-      let(:params) { {:aggregate => true, :command => 'bar', :runbook => 'y/gronk'} }
-      it { should contain_sensu__check('examplecheck').with_handle(false) }
-      it { should contain_sensu__check('examplecheck').with_aggregate(true) }
-    end
-    context "Non Aggregate Checks" do
-      let(:params) { { :command => 'bar', :runbook => 'y/gronk'} }
-      it { should contain_sensu__check('examplecheck').with_handle(true) }
-      it { should contain_sensu__check('examplecheck').with_aggregate(false) }
-    end
-
     context "check with timeout" do
       let(:params) { { :command => 'bar', :runbook => 'y/gronk', :check_every => '5m', :timeout => 50 } }
       it { should contain_sensu__check('examplecheck').with_timeout(50) }
@@ -254,7 +204,6 @@ describe 'monitoring_check' do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk' } }
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"=>"http://gronk",
-        "dependencies"=>[],
         "ticket"=>false,
         "irc_channels"=>:undef,
         "tip"=>false,
@@ -274,7 +223,6 @@ describe 'monitoring_check' do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :can_override => false } }
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"=>"http://gronk",
-        "dependencies"=>[],
         "ticket"=>false,
         "irc_channels"=>:undef,
         "tip"=>false,
@@ -290,5 +238,6 @@ describe 'monitoring_check' do
       )}
     end
   end
+
 end
 
