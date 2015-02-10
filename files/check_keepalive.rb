@@ -81,7 +81,7 @@ class ClientKeepalive < Handler
     payload = { :client => client, :check => check }
 
     @logger.debug('publishing check keepalive', {:payload => payload})
-    @transport.publish(:direct, 'results', MultiJson.dump(payload)) do |info|
+    @settings[:transport].publish(:direct, 'results', MultiJson.dump(payload)) do |info|
       if info[:error]
         @logger.error('failed to publish check keepalive', {
           :payload => payload,
