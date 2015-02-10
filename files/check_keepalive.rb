@@ -10,9 +10,9 @@ module Extension
 #  - redis      @settings[:redis]
 #  - transport  @settings[:transport]
 
-class ClientKeepalive < Handler
+class CheckKeepalive < Handler
   def name
-    'client_keepalive'
+    'check_keepalive'
   end
 
   def description
