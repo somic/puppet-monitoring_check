@@ -76,7 +76,8 @@ class ClientKeepalive < Handler
       :name   => check_name,
       :status => 2,
       :issued => Time.now.to_i,
-      :output => "No keepalive sent from client for #{stale_for} seconds." }
+      :output => "Watchdog timer expired. Haven't heard any output " <<
+                 "for this check in #{stale_for} seconds." }
 
     payload = { :client => client, :check => check }
 
