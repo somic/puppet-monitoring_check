@@ -4,7 +4,7 @@
 
 # FIXME
 $: << 'lib'
-ARBITRARY_NUMBER_1 = 10
+ARBITRARY_NUMBER_1 = 20
 
 require 'rubygems'
 require 'sensu-plugin/check/cli'
@@ -46,7 +46,7 @@ class CheckSynchronized < Sensu::Plugin::Check::CLI
                    "name"     => check_name
       check["output"] = `#{check["command"]}`
       # TODO only OK or CRITICAL now, do we need more status codes? TBD
-      check["status"] = $? ? 0 : 2
+      check["status"] = $?.success? ? 0 : 2
     }
 
     send_event_to_local_sensu_client
