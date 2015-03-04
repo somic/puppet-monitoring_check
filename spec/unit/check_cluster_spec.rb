@@ -42,7 +42,7 @@ describe CheckCluster do
 
   let(:aggregator) do
     double(:aggregator).tap do |agg|
-      agg.stub(:summary).and_return({:total => 1, :ok => 1, :active => 1})
+      agg.stub(:summary).and_return({:total => 1, :ok => 1, :silenced => 0})
     end
   end
 
@@ -81,19 +81,17 @@ describe CheckCluster do
         check.run
       end
 
-      it "when lock slipped" do
+      it "when lock problem" do
         redis.stub(:setnx).and_return 0
         redis.stub(:get).and_return nil
-        expect_status :ok, /slip/
+        expect_status :ok, /problem/
         check.run
       end
-    end
 
-    context "should be WARNING" do
       it "when lock expired" do
         redis.stub(:setnx).and_return 0
         redis.stub(:get).and_return 0
-        expect_status :warning, /expired/
+        expect_status :ok, /expired/
         check.run
       end
     end
@@ -125,12 +123,12 @@ describe CheckCluster do
   context "payload" do
     context "should be WARNING" do
       it "when no old-enough aggregates" do
-        expect(check.send :check_aggregate, :total => 0).to(
-          eq(["WARNING", "No active servers"]))
+        expect(check.send :check_aggregate, :total => 0, :silenced => 0).to(
+          eq(["OK", "No servers running the check"]))
       end
 
       it "when reached warning threshold" do
-        check.send(:check_aggregate, :ok => 60, :total => 100) do |status, message|
+        check.send(:check_aggregate, :ok => 60, :total => 100, :silenced => 0) do |status, message|
           expect(status).to be(1)
           expect(message).to match(/40%/)
         end
@@ -139,7 +137,7 @@ describe CheckCluster do
 
     context "should be CRITICAL" do
       it "when reached critical threshold" do
-        check.send(:check_aggregate, :ok => 40, :total => 100) do |status, message|
+        check.send(:check_aggregate, :ok => 40, :total => 100, :silenced => 0) do |status, message|
           expect(status).to be(2)
           expect(message).to match(/60%/)
         end
