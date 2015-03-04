@@ -182,7 +182,7 @@ class RedisLocker
     elsif locked_at = redis.get(key).to_i
       if (time_alive = now - locked_at) > interval
         expire
-        status.warning "Lock problem: #{now} - #{locked_at} > #{interval}, expired immediately"
+        status.ok "Lock problem: #{now} - #{locked_at} > #{interval}, expired immediately"
       else
         status.ok "Lock expires in #{interval - time_alive} seconds"
       end
