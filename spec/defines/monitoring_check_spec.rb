@@ -18,7 +18,7 @@ describe 'monitoring_check' do
     let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => true} }
       it do
         expect {
-          should compile
+          should contain_sensu__check('examplecheck')
         }.to raise_error(Puppet::Error, /No sensu_handlers::teams/)
       end
   end
