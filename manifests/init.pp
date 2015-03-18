@@ -5,11 +5,13 @@
 #
 # === Parameters
 #
-# [*ensure*]
-# present or absent, defaults to present
-#
 # [*command*]
-# The name of the check command to run, this should be a standard nagios/sensu type check
+# The check command to run. This should be a standard nagios/sensu type check.
+#
+# [*runbook*]
+# The URI to the google doc runbook for this check
+# Should be of the form: y/my_runbook_name (preferred), or
+# http://...some.uri. This is required.
 #
 # [*needs_sudo*]
 # Boolean for if to run this check with sudo. Defaults to false
@@ -20,40 +22,22 @@
 # [*check_every*]
 # How often to run this check. Can be an integer number of seconds, or an
 # abbreviation such as '2m' for 120 seconds, or '2h' for 7200 seconds.
-# Defaults to 5m
+# Defaults to 1m.
+#
+# [*timeout*]
+# How long the check will be allowed to run before it is killed and reported
+# as failed. Defaults to the check_every frequency.
 #
 # [*alert_after*]
 # How long a check is allowed to be failing for before alerting (pagerduty/irc).
 # Can be an integer number of seconds, or an abbreviattion
-# Defaults to undef, meaning sensu will alert as soon as the check fails.
+# Defaults to 0s, meaning sensu will alert as soon as the check fails.
 #
 # [*realert_every*]
 # Number of event occurrences before the handler should take action.
 # For example, 10, would mean only re-notify every 10 fails.
 # This logic only occurs after the alert_after time has expired.
 # Defaults to -1 which means sensu will use exponential backoff.
-#
-# [*runbook*]
-# The URI to the google doc runbook for this check
-# Should be of the form: y/my_runbook_name (preferred), or
-# http://...some.uri
-#
-# [*tip*]
-# A quick tip for how to respond to / clear the alert without having to read the
-# runbook. Optional (and custom checks are recommended to put the tip into the
-# check output).
-#
-# [*annotation*]
-# The line of code that should be referenced as the "originator" for this
-# monitoring check.  Obviously there is an entire call stack to choose from.
-# Try to use the most relevant/helpful value here.
-#
-# [*sla*]
-#  Allows you to define the SLA for the service you are monitoring. Notice
-#  it is lower case!
-#  
-#  This is (currently) just a human readable string to give more context
-#  about the urgency of an alert when you see it in a ticket/page/email/irc.
 #
 # [*team*]
 # The team responsible for this check (i.e. which team's pagerduty to escalate to)
@@ -80,70 +64,89 @@
 # Boolean. Determines if the JIRA handler is executed or not. Defaults to false.
 #
 # [*project*]
-# Optionally set the JIRA project for a check. Otherwise if, if ticket=>true, then
-# it will use the project set for the team.
+# Optionally set the JIRA project for a check. Otherwise if, if ticket=>true,
+# then it will use the project set for the team.
+#
+# [*tip*]
+# A quick tip for how to respond to / clear the alert without having to read the
+# runbook. Optional (and custom checks are recommended to put the tip into the
+# check output).
+#
+# [*sla*]
+# Allows you to define the SLA for the service you are monitoring. Notice
+# it is lower case!
+#
+# This is (currently) just a human readable string usable in handlers to give
+# more context about the urgency of an alert when you see it in a
+# ticket/page/email/irc.
 #
 # [*dependencies*]
 # A list of dependencies for this check to be escalated if it's critical.
 # If any of these dependencies are critical then the check will not be escalated
-# by the handler
+# by the handler.
 #
 # Dependencies are simply other check names, or certname/checkname for
-# checks on other hosts
-#
+# checks on other hosts.
 # Defaults to empty
 #
-# [*high_flap_threshold*]
-# Custom threshold to consider this service flapping at
-# Defaults to unset
-#
-# [*low_flap_threshold*]
-# Custom threshold at which to consider this services as having stopped flapping.
-# Defaults to unset
-# See http://nagios.sourceforge.net/docs/3_0/flapping.html for more details
+# [*use_sensu*]
+# Implement the monitoring check with sensu. Defaults to true, and
+# it's silly to set it to false until another monitoring system is supported.
 #
 # [*sensu_custom*]
 # A hash of custom parameters to inject into the sensu check JSON output.
 # These will override any parameters configured by the wrapper.
 # Defaults to an empty hash.
 #
+# [*low_flap_threshold*]
+# Custom threshold at which to consider this service as having stopped flapping.
+# Defaults to unset
+# See http://nagios.sourceforge.net/docs/3_0/flapping.html for more details
+#
+# [*high_flap_threshold*]
+# Custom threshold to consider this service flapping at
+# Defaults to unset
+#
 # [*can_override*]
 # A boolean that defaults to true for if the $::override_sensu_checks_to
 # fact can be used to override the team (to 'noop') and the notification_email
-# parameter (to the value of $::override_sensu_checks_to). Defaults to true.
+# parameter (to the value of $::override_sensu_checks_to).
+# Defaults to true.
 #
 # This, by default allows you to set the $::override_sensu_checks_to fact
 # in /etc/facter/facts.d to stop checks on a single machine from alerting via the
 # normal mechanism. Setting this to false will stop this mechanism from applying
 # to a check.
 #
+# [*annotation*]
+# The line of code that should be referenced as the "originator" for this
+# monitoring check. Obviously there is an entire call stack to choose from.
+# Try to use the most relevant/helpful value here.
+#
 define monitoring_check (
-    $command,
-    $runbook,
-    $annotation            = annotation_guess(),
-    $check_every           = '1m',
-    $timeout               = undef,
-    $alert_after           = '0s',
-    $realert_every         = '-1',
-    $irc_channels          = undef,
-    $notification_email    = 'undef',
-    $ticket                = false,
-    $project               = false,
-    $tip                   = false,
-    $sla                   = 'No SLA defined.',
-    $page                  = false,
-    $needs_sudo            = false,
-    $sudo_user             = 'root',
-    $team                  = 'operations',
-    $dependencies          = [],
-    $use_sensu             = hiera('sensu_enabled', true),
-    $use_nagios            = false,
-    $nagios_custom         = {},
-    $low_flap_threshold    = undef,
-    $high_flap_threshold   = undef,
-    $aggregate             = false,
-    $sensu_custom          = {},
-    $can_override          = true,
+  $command,
+  $runbook,
+  $needs_sudo            = false,
+  $sudo_user             = 'root',
+  $check_every           = '1m',
+  $timeout               = undef,
+  $alert_after           = '0s',
+  $realert_every         = '-1',
+  $team                  = 'operations',
+  $page                  = false,
+  $irc_channels          = undef,
+  $notification_email    = 'undef',
+  $ticket                = false,
+  $project               = false,
+  $tip                   = false,
+  $sla                   = 'No SLA defined.',
+  $dependencies          = [],
+  $use_sensu             = hiera('sensu_enabled', true),
+  $sensu_custom          = {},
+  $low_flap_threshold    = undef,
+  $high_flap_threshold   = undef,
+  $can_override          = true,
+  $annotation            = annotation_guess(),
 ) {
 
   include monitoring_check::params
@@ -165,7 +168,6 @@ define monitoring_check (
   validate_bool($ticket)
 
   validate_hash($sensu_custom)
-  validate_hash($nagios_custom)
 
   $interval_s = human_time_to_seconds($check_every)
   validate_re($interval_s, '^\d+$')
@@ -239,8 +241,4 @@ define monitoring_check (
       }, $override_custom), $sensu_custom)
     }
   }
-  if str2bool($use_nagios) {
-    fail("Nagios check generation unimplemented for check ${title}")
-  }
 }
-
