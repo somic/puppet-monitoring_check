@@ -61,7 +61,7 @@ describe RedisLocker do
     it "should report ok" do
       redis.stub(:setnx).and_return(0)
       redis.stub(:get).and_return(nil)
-      expect(status).to receive(:ok).with(/slipped/)
+      expect(status).to receive(:ok).with(/problem/)
       locker.run { }
     end
   end
@@ -70,7 +70,7 @@ describe RedisLocker do
     it "should report ok" do
       redis.stub(:setnx).and_return(0)
       redis.stub(:get).and_return(expired)
-      expect(status).to receive(:warning).with(/problem/)
+      expect(status).to receive(:ok).with(/problem/)
       locker.run { }
     end
   end
