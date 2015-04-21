@@ -2,12 +2,11 @@
 #
 # === Parameters
 #
-# See parameters for monitoring_check
+# See parameters for monitoring_check.
 #
 define monitoring_check::synchronized (
   $command,
   $runbook,
-  # monitoring_check optional params
   $needs_sudo            = false,
   $sudo_user             = 'root',
   $check_every           = '1m',
