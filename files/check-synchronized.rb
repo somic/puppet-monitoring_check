@@ -43,8 +43,6 @@ class CheckSynchronized < Sensu::Plugin::Check::CLI
       send_new_check_event_to_local_sensu_client
     }
 
-    check[:foo] = 'bar'
-    check.delete :source
     ok "noop"
   end
 
