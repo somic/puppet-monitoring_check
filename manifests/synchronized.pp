@@ -66,8 +66,7 @@ define monitoring_check::synchronized (
   }
 
   $new_title = "synchronized_placeholder_for_${title}"
-
-  $new_commandd = "/etc/sensu/plugins/check-synchronized.rb -f /etc/sensu/conf.d/synchronized.json -c ${new_title}"
+  $new_command = "/etc/sensu/plugins/check-synchronized.rb -f /etc/sensu/conf.d/synchronized.json -c ${new_title}"
 
   monitoring_check { $new_title:
     command               => $new_command,
