@@ -30,17 +30,20 @@ define monitoring_check::synchronized (
   $can_override          = true,
   $annotation            = annotation_guess(),
 ) {
-  include monitoring_check::synchronized_install
 
-  $script = Monitoring_check::Synchronized_install::File['check_script'].path
-  $config = Monitoring_check::Synchronized_install::File['config_file'].path
+  include monitoring_check::synchronized::install
 
   $custom_synchronized = {
     actual_command => $command,
+    actual_name    => $title,
   }
 
-  monitoring_check { $title:
-    command               => "${script} -c ${title} -f ${config}",
+  $new_title = "synchronized_placeholder_for_${title}"
+
+  $new_commandd = "/etc/sensu/plugins/check-synchronized.rb -f /etc/sensu/conf.d/synchronized.json -c ${new_title}"
+
+  monitoring_check { $new_title:
+    command               => $new_command,
     runbook               => $runbook,
     needs_sudo            => $needs_sudo,
     sudo_user             => $sudo_user,

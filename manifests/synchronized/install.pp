@@ -21,16 +21,14 @@ class monitoring_check::synchronized_install(
     source => 'puppet:///modules/monitoring_check/lib/tiny_redis.rb',
   }
 
-  file { 'check_script':
-    path   => '/etc/sensu/plugins/check-synchronized.rb',
+  file { '/etc/sensu/plugins/check-synchronized.rb':
     owner  => 'sensu',
     group  => 'sensu',
     mode   => '0555',
     source => 'puppet:///modules/monitoring_check/check-synchronized.rb',
   }
 
-  file { 'config_file':
-    path    => '/etc/sensu/conf.d/synchronized.json',
+  file { '/etc/sensu/conf.d/synchronized.json':
     owner   => 'sensu',
     group   => 'sensu',
     mode    => '0444',
