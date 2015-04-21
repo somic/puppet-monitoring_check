@@ -1,12 +1,38 @@
 # == Define: monitoring_check::synchronized
 #
+# This is like a regular monitoring_check which can be configured to run
+# on multiple hosts. All deployments of this check will use
+# local sensu's redis to synchronize themselves such that only
+# one check will actually execute within each $check_every interval,
+# all other checks will be noop during this time interval.
+#
+# Common use case is when you want to monitor something external from
+# many hosts but do not want to receive a flood of events from each deployed check
+# in case of failure.
+#
+# You most likely will want to set :source to some string that is not tied
+# to a host on which this check is going to run.
+#
+# == Examples
+#
+# monitoring_check::synchronized { 'ping_google_dns':
+#   command => 'ping -c 1 8.8.8.8 >/dev/null 2>&1',
+#   source  => 'datacenter1_devA_environment',
+#   runbook => 'runbook/URL/here',
+# }
+#
 # === Parameters
 #
-# See parameters for monitoring_check.
+# Most parameters are the same as monitoring_check.
+#
+# [*source*]
+# String that identifies this event. Should not be tied to a host that generated
+# this event because it can come from any host where this check is deployed.
 #
 define monitoring_check::synchronized (
   $command,
   $runbook,
+  $source,
   $needs_sudo            = false,
   $sudo_user             = 'root',
   $check_every           = '1m',
@@ -29,12 +55,14 @@ define monitoring_check::synchronized (
   $can_override          = true,
   $annotation            = annotation_guess(),
 ) {
+  validate_string($source)
 
   include monitoring_check::synchronized::install
 
   $custom_synchronized = {
     actual_command => $command,
     actual_name    => $title,
+    source         => $source,
   }
 
   $new_title = "synchronized_placeholder_for_${title}"
