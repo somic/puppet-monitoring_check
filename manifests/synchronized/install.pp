@@ -32,5 +32,5 @@ class monitoring_check::synchronized_install(
     owner   => 'sensu',
     group   => 'sensu',
     mode    => '0444',
-    content => template('
+    content => template('monitoring_check/synchronized.json.erb'),
 }
