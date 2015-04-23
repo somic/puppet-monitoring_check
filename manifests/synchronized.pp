@@ -1,4 +1,4 @@
-# == Define: monitoring_check::synchronized
+# == Class monitoring_check::synchronized
 #
 # This is like a regular monitoring_check which can be configured to run
 # on multiple hosts. All deployments of this check will use
@@ -87,7 +87,7 @@ define monitoring_check::synchronized (
     sla                   => $sla,
     dependencies          => $dependencies,
     use_sensu             => $use_sensu,
-    sensu_custom          => $sensu_custom.merge($custom_synchronized),
+    sensu_custom          => merge($sensu_custom, $custom_synchronized),
     low_flap_threshold    => $low_flap_threshold,
     high_flap_threshold   => $high_flap_threshold,
     can_override          => $can_override,

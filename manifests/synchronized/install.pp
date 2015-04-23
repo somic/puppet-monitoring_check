@@ -1,7 +1,7 @@
-# == Define: monitoring_check::synchronized_install
+# == Class: monitoring_check::synchronized::install
 #
 #
-class monitoring_check::synchronized_install(
+class monitoring_check::synchronized::install (
   $sensu_checks_dir  = '/etc/sensu/conf.d/checks',
   $sensu_client_port = 3030,
   $redis_server,
@@ -33,4 +33,5 @@ class monitoring_check::synchronized_install(
     group   => 'sensu',
     mode    => '0444',
     content => template('monitoring_check/synchronized.json.erb'),
+  }
 }
