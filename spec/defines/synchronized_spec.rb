@@ -15,7 +15,16 @@ describe 'monitoring_check::synchronized' do
       :command => 'foo', :runbook => 'y/bar', :source => 'baz',
       :team => 'qux',
     }}
-    it { should compile }
+    it {
+      should contain_class('monitoring_check::synchronized::install')
+      should contain_monitoring_check('synchronized_placeholder_for_example1') \
+               .with_command(/check-synchronized.rb/) \
+               .with_sensu_custom({
+                 :actual_command => 'foo',
+                 :actual_name    => 'example1',
+                 :source         => 'baz'
+               })
+    }
   end
   
 end
