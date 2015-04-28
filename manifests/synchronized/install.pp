@@ -7,14 +7,7 @@ class monitoring_check::synchronized::install (
   $redis_server,
   $redis_port        = 6379,
 ) {
-  file { '/etc/sensu/plugins/lib':
-    owner  => 'sensu',
-    group  => 'sensu',
-    ensure => 'directory',
-    purge  => true,
-  }
-
-  file { '/etc/sensu/plugins/lib/tiny_redis.rb':
+  file { '/etc/sensu/plugins/tiny_redis.rb':
     owner  => 'sensu',
     group  => 'sensu',
     mode   => '0444',

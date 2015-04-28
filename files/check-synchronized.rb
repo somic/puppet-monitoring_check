@@ -1,6 +1,6 @@
 #!/opt/sensu/embedded/bin/ruby
 
-$: << File.dirname(__FILE__) + '/lib'
+$: << File.dirname(__FILE__)
 
 require 'rubygems'
 require 'sensu-plugin/check/cli'
