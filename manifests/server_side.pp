@@ -1,4 +1,4 @@
-# == Class monitoring_check::synchronized
+# == Class monitoring_check::server_side
 #
 # This is like a regular monitoring_check which can be configured to run
 # on multiple hosts. All deployments of this check will use
@@ -15,7 +15,7 @@
 #
 # == Examples
 #
-# monitoring_check::synchronized { 'ping_google_dns':
+# monitoring_check::server_side { 'ping_google_dns':
 #   command => 'ping -c 1 8.8.8.8 >/dev/null 2>&1',
 #   source  => 'datacenter1_devA_environment',
 #   runbook => 'runbook/URL/here',
@@ -29,7 +29,7 @@
 # String that identifies this event. Should not be tied to a host that generated
 # this event because it can come from any host where this check is deployed.
 #
-define monitoring_check::synchronized (
+define monitoring_check::server_side (
   $command,
   $runbook,
   $source,
@@ -57,15 +57,15 @@ define monitoring_check::synchronized (
 ) {
   validate_string($source)
 
-  include monitoring_check::synchronized::install
+  include monitoring_check::server_side::install
 
-  $custom_synchronized = {
+  $custom_server_side = {
     actual_command => $command,
     actual_name    => $title,
     source         => $source,
   }
 
-  $new_title = "synchronized_placeholder_for_${title}"
+  $new_title = "server_side_placeholder_for_${title}"
   $new_command = "/etc/sensu/plugins/check-synchronized.rb -f /etc/sensu/conf.d/synchronized.json -c ${new_title}"
 
   monitoring_check { $new_title:
@@ -87,7 +87,7 @@ define monitoring_check::synchronized (
     sla                   => $sla,
     dependencies          => $dependencies,
     use_sensu             => $use_sensu,
-    sensu_custom          => merge($sensu_custom, $custom_synchronized),
+    sensu_custom          => merge($sensu_custom, $custom_server_side),
     low_flap_threshold    => $low_flap_threshold,
     high_flap_threshold   => $high_flap_threshold,
     can_override          => $can_override,
