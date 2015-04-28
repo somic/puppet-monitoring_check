@@ -1,7 +1,7 @@
-# == Class: monitoring_check::synchronized::install
+# == Class: monitoring_check::server_side::install
 #
 #
-class monitoring_check::synchronized::install (
+class monitoring_check::server_side::install (
   $sensu_checks_dir  = '/etc/sensu/conf.d/checks',
   $sensu_client_port = 3030,
   $redis_server,
@@ -11,14 +11,14 @@ class monitoring_check::synchronized::install (
     owner  => 'sensu',
     group  => 'sensu',
     mode   => '0444',
-    source => 'puppet:///modules/monitoring_check/lib/tiny_redis.rb',
+    source => 'puppet:///modules/monitoring_check/tiny_redis.rb',
   }
 
-  file { '/etc/sensu/plugins/check-synchronized.rb':
+  file { '/etc/sensu/plugins/check_server_side.rb':
     owner  => 'sensu',
     group  => 'sensu',
     mode   => '0555',
-    source => 'puppet:///modules/monitoring_check/check-synchronized.rb',
+    source => 'puppet:///modules/monitoring_check/check_server_side.rb',
   }
 
   file { '/etc/sensu/conf.d/synchronized.json':
