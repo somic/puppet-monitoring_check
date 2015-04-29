@@ -36,6 +36,7 @@ class monitoring_check::params (
       owner   => 'sensu',
       group   => 'sensu',
       mode    => '0444',
+      require => Package['sensu'],
       content => inline_template('<%= require "json"; JSON.generate @team_data_hash %>'),
     }
   }
