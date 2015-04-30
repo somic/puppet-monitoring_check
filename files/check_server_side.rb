@@ -8,7 +8,7 @@ require 'tiny_redis'
 require 'socket'
 require 'json'
 
-class CheckSynchronized < Sensu::Plugin::Check::CLI
+class CheckServerSide < Sensu::Plugin::Check::CLI
 
   option :check,
     :short => '-c check_name',
@@ -54,7 +54,7 @@ class CheckSynchronized < Sensu::Plugin::Check::CLI
   def distributed_mutex
     mutex_expiration = check[:interval] > 5 ? check[:interval] - 5 : 1
     @mutex = TinyRedis::Mutex.new(redis,
-                                  "synchronized_check_mutex::::#{check_name}",
+                                  "check_server_side_mutex::::#{check_name}",
                                   mutex_expiration,
                                   $stdout)
   end
