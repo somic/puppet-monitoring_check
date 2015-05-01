@@ -3,7 +3,6 @@ require 'spec_helper'
 describe 'monitoring_check::server_side' do
 
   let(:title) { 'example1' }
-  let('::sensu::check_notify') { 'foo' }
 
   let(:hiera_data) {{
     'monitoring_check::params::team_data' => { 'qux' => { } },
