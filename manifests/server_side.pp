@@ -66,7 +66,7 @@ define monitoring_check::server_side (
   }
 
   $new_title = "server_side_placeholder_for_${title}"
-  $new_command = "/etc/sensu/plugins/check_server_side.rb -f /etc/sensu/conf.d/synchronized.json -c ${new_title}"
+  $new_command = "/etc/sensu/plugins/check_server_side.rb -c ${new_title}"
 
   monitoring_check { $new_title:
     command               => $new_command,
