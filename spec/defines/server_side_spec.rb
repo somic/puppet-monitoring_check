@@ -6,7 +6,6 @@ describe 'monitoring_check::server_side' do
   let('::sensu::check_notify') { 'foo' }
 
   let(:hiera_data) {{
-    'monitoring_check::server_side::install::redis_server' => 'redis1.example.com',
     'monitoring_check::params::team_data' => { 'qux' => { } },
   }}
 
