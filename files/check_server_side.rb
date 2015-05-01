@@ -28,6 +28,9 @@ class CheckServerSide < Sensu::Plugin::Check::CLI
     # if successful - create and execute new check.
     # if failed to obtain the lock - do nothing.
     distributed_mutex.run_with_lock_or_skip {
+      # let's clone this check into a new object, adjust some fields,
+      # execute its command and explicitly send the result of new check
+      # to local redis-client process
       @new_check = { 'executed' => Time.now.to_i }.merge(check)
       new_check['command'] = new_check.delete('actual_command')
       new_check['name'] = new_check.delete('actual_name')
@@ -37,6 +40,8 @@ class CheckServerSide < Sensu::Plugin::Check::CLI
       send_new_check_event_to_local_sensu_client
     }
 
+    # placeholder check never does anything interesting and we never ever
+    # want to see it in uchiwa or anywhere else
     ok "noop"
   end
 
