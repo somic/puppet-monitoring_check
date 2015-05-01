@@ -3,12 +3,15 @@
 $: << File.dirname(__FILE__)
 
 require 'rubygems'
+require 'sensu-plugin/utils'
 require 'sensu-plugin/check/cli'
 require 'tiny_redis'
 require 'socket'
-require 'json'
 
 class CheckServerSide < Sensu::Plugin::Check::CLI
+
+  # let's get all sensu settings
+  include Sensu::Plugin::Utils
 
   option :check,
     :short => '-c check_name',
@@ -16,30 +19,21 @@ class CheckServerSide < Sensu::Plugin::Check::CLI
     :description => 'name of the check',
     :required => true
 
-  option :config,
-    :short => '-f config_file',
-    :long => '--config config_file',
-    :description => 'path to synchronized check config json file',
-    :required => true
-
-  attr_accessor :check, :check_name, :new_check
-  attr_reader :configuration
+  attr_reader :check, :new_check
 
   def run
-    File.open(config[:config]) { |f|
-      @configuration = JSON.parse(f.read, :symbolize_names => true) }
-    File.open("#{configuration[:sensu_checks_dir]}/#{config[:check]}.json") { |f|
-      check_json = JSON.parse(f.read, :symbolize_names => true)[:checks]
-      @check_name, @check =  check_json.keys.first, check_json.values.first
-    }
+    @check = settings['checks'][config[:check]]
 
-    distributed_mutex.synchronize {
-      @new_check = { :executed => Time.now.to_i }.merge(check)
-      new_check[:command] = new_check.delete(:actual_command)
-      new_check[:name] = new_check.delete(:actual_name)
-      new_check[:output] = `( #{new_check[:command]} ) 2>&1`
-      new_check[:status] = $?.success? ? 0 : 2
-      new_check[:issued] = Time.now.to_i
+    # try to obtain "lock" from redis;
+    # if successful - create and execute new check.
+    # if failed to obtain the lock - do nothing.
+    distributed_mutex.run_with_lock_or_skip {
+      @new_check = { 'executed' => Time.now.to_i }.merge(check)
+      new_check['command'] = new_check.delete('actual_command')
+      new_check['name'] = new_check.delete('actual_name')
+      new_check['output'] = `( #{new_check['command']} ) 2>&1`
+      new_check['status'] = $?.success? ? 0 : 2
+      new_check['issued'] = Time.now.to_i
       send_new_check_event_to_local_sensu_client
     }
 
@@ -47,20 +41,22 @@ class CheckServerSide < Sensu::Plugin::Check::CLI
   end
 
   def redis
-    @redis ||= TinyRedis::Client.new(host=configuration[:redis_server],
-                                     port=configuration[:redis_port])
+    # settings will include redis server information on sensu servers but
+    # not on sensu clients
+    @redis ||= TinyRedis::Client.new(host=settings['redis']['host'],
+                                     port=settings['redis']['port'])
   end
 
   def distributed_mutex
-    mutex_expiration = check[:interval] > 5 ? check[:interval] - 5 : 1
+    mutex_expiration = check['interval'] > 5 ? check['interval'] - 5 : 1
     @mutex = TinyRedis::Mutex.new(redis,
-                                  "check_server_side_mutex::::#{check_name}",
+                                  "check_server_side_mutex::::#{config[:check]}",
                                   mutex_expiration,
                                   $stdout)
   end
 
   def send_new_check_event_to_local_sensu_client
-    sock = TCPSocket.new('127.0.0.1', configuration[:sensu_client_port])
+    sock = TCPSocket.new('127.0.0.1', 3030)
     sock.puts(new_check.to_json)
     sock.close
   end

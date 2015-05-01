@@ -22,7 +22,7 @@ module TinyRedis
       @logger   = logger
     end
 
-    def synchronize
+    def run_with_lock_or_skip
       # TODO
       # assumes clocks on hosts working with this lock are fairly in sync -
       # may not be a good assumption in all cases but will do for now
@@ -32,7 +32,6 @@ module TinyRedis
       if redis.setnx(key, now) == 1
         begin
           expire interval
-          puts "Running check"
           yield
         rescue => e
           expire
