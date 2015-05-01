@@ -19,9 +19,9 @@ describe 'monitoring_check::server_side' do
       should contain_monitoring_check('server_side_placeholder_for_example1') \
                .with_command(/check_server_side.rb/) \
                .with_sensu_custom({
-                 :actual_command => 'foo',
-                 :actual_name    => 'example1',
-                 :source         => 'baz'
+                 'actual_command' => 'foo',
+                 'actual_name'    => 'example1',
+                 'source'         => 'baz'
                })
     }
   end
