@@ -3,6 +3,7 @@
 /bin/
 /bundle/
 /vendor/gems/
+/vendor/gem/
 
 # Librarian-Puppet
 /.librarian/
