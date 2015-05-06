@@ -32,7 +32,8 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :short => "-C PERCENT",
     :long => "--critical PERCENT",
     :description => "PERCENT non-ok before critical",
-    :proc => proc {|a| a.to_i }
+    :proc => proc {|a| a.to_i },
+    :default => 80
 
   option :silenced,
     :short => "-S yes",
