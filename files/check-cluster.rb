@@ -45,8 +45,8 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     unknown "Sensu <0.13 is not supported" unless check_sensu_version
 
     lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
-    locked_run(self, redis, lock_key, check_interval, Time.now.to_i, logger) do
-      status, output = check_aggregate(aggregator.summary(check_interval))
+    locked_run(self, redis, lock_key, cluster_check[:interval] || 300, Time.now.to_i, logger) do
+      status, output = check_aggregate(aggregator.summary(target_check[:interval] || 300))
       logger.puts output
       send_payload EXIT_CODES[status], output
       ok "Check executed successfully (#{status}: #{output})"
@@ -61,10 +61,6 @@ private
 
   def aggregator
     RedisCheckAggregate.new(redis, config[:check])
-  end
-
-  def check_interval
-    (cluster_check || target_check || {})[:interval] || 300
   end
 
   def check_sensu_version
