@@ -7,6 +7,7 @@ require 'sensu-plugin/utils'
 require 'sensu-plugin/check/cli'
 require 'tiny_redis'
 require 'socket'
+require 'json'
 
 class CheckServerSide < Sensu::Plugin::Check::CLI
 
