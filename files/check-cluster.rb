@@ -26,14 +26,14 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :short => "-c CHECK",
     :long => "--check CHECK",
     :description => "Aggregate CHECK name",
-    :required => true
+    :required => true,
+    :default => 80
 
   option :critical,
     :short => "-C PERCENT",
     :long => "--critical PERCENT",
     :description => "PERCENT non-ok before critical",
-    :proc => proc {|a| a.to_i },
-    :default => 80
+    :proc => proc {|a| a.to_i }
 
   option :silenced,
     :short => "-S yes",
@@ -101,20 +101,20 @@ private
     eff_total = total - silenced * (config[:silenced] ? 1 : 0)
     return 'OK', 'All hosts silenced' if eff_total.zero?
 
-    nz_pct  = (100 * (eff_total - ok) / eff_total.to_f).to_i
+    ok_pct  = (100 * ok / eff_total.to_f).to_i
 
-    message = "#{eff_total-ok} OK out of #{eff_total} total."
+    message = "#{ok} OK out of #{eff_total} total."
     message << " #{silenced} silenced." if config[:silenced] && silenced > 0
-    message << " (#{nz_pct}%, which is not more than #{config[:critical]}%)"
+    message << " (#{ok_pct}% OK, #{config[:critical]}% threshold)"
 
-    state   = nz_pct >= config[:critical] ? 'CRITICAL' : 'OK'
+    state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
     return state, message
   end
 
-  # def api
-  #   @api ||= SensuApi.new(
-  #     *sensu_settings[:api].values_at(:host, :port, :user, :password))
-  # end
+  def api
+    @api ||= SensuApi.new(
+      *sensu_settings[:api].values_at(:host, :port, :user, :password))
+  end
 
   def sensu_settings
     @sensu_settings ||=
@@ -127,7 +127,8 @@ private
       :status => status,
       :output => output,
       :source => config[:cluster_name],
-      :name   => config[:check])
+      :name   => config[:check],
+      :irc_channels => cluster_check[:irc_channels])
 
     payload[:runbook] = cluster_check[:runbook] if cluster_check[:runbook] != '-'
     payload[:tip]     = cluster_check[:tip] if cluster_check[:tip] != '-'
@@ -147,8 +148,10 @@ private
   end
 
   def target_check
-    sensu_settings[:checks][config[:check]] or
-      raise "#{config[:check]} not found in sensu settings"
+    @target_check ||=
+      sensu_settings[:checks][config[:check]] or
+      api.request("/checks/#{config[:check]}") or
+        raise "#{config[:check]} not found in sensu settings"
   end
 end
 
@@ -230,34 +233,34 @@ class TinyRedisClient
   end
 end
 
-# class SensuApi
-#   attr_accessor :host, :port, :user, :password
+class SensuApi
+  attr_accessor :host, :port, :user, :password
 
-#   def initialize(host, port, user=nil, password=nil)
-#     @host = host
-#     @port = port
-#     @user = user
-#     @password = password
-#   end
+  def initialize(host, port, user=nil, password=nil)
+    @host = host
+    @port = port
+    @user = user
+    @password = password
+  end
 
-#   def request(path, opts={})
-#     uri = URI("http://#{host}:#{port}#{path}")
-#     uri.query = URI.encode_www_form(opts)
+  def request(path, opts={})
+    uri = URI("http://#{host}:#{port}#{path}")
+    uri.query = URI.encode_www_form(opts)
 
-#     req = Net::HTTP::Get.new(uri)
-#     req.basic_auth(user, password) if user && password
+    req = Net::HTTP::Get.new(uri)
+    req.basic_auth(user, password) if user && password
 
-#     res = Net::HTTP.start(uri.hostname, uri.port) do |http|
-#       http.request(req)
-#     end
+    res = Net::HTTP.start(uri.hostname, uri.port) do |http|
+      http.request(req)
+    end
 
-#     if res.is_a?(Net::HTTPSuccess)
-#       JSON.parse(res.body)
-#     else
-#       raise "Error querying sensu api: #{res.code} '#{res.body}'"
-#     end
-#   end
-# end
+    if res.is_a?(Net::HTTPSuccess)
+      JSON.parse(res.body, :symbolize_names => true)
+    else
+      raise "Error querying sensu api: #{res.code} '#{res.body}'"
+    end
+  end
+end
 
 class RedisCheckAggregate
   def initialize(redis, check)
