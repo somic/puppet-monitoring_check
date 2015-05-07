@@ -124,7 +124,10 @@ private
       :output => output,
       :source => config[:cluster_name],
       :name   => config[:check],
-      :irc_channels => cluster_check[:irc_channels])
+      :page   => cluster_check[:page],
+      :team   => cluster_check[:team],
+      :notification_email => cluster_check[:notification_email],
+      :irc_channels       => cluster_check[:irc_channels])
 
     payload[:runbook] = cluster_check[:runbook] if cluster_check[:runbook] != '-'
     payload[:tip]     = cluster_check[:tip] if cluster_check[:tip] != '-'
