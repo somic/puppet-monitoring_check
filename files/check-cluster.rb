@@ -61,6 +61,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       logger.puts output
       send_payload EXIT_CODES[status], output
       ok "Check executed successfully (#{status}: #{output})"
+      return
     end
 
     unknown "Check didn't report status"
