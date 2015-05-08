@@ -42,11 +42,19 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :default => false
 
   def run
-    unknown "Sensu <0.13 is not supported" unless check_sensu_version
+    unless check_sensu_version
+      unknown "Sensu <0.13 is not supported"
+      return
+    end
+
+    if !cluster_check[:interval] || !cluster_check[:target_interval]
+      critical "Please configure interval and target_interval"
+      return
+    end
 
     lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
-    locked_run(self, redis, lock_key, cluster_check[:interval] || 300, Time.now.to_i, logger) do
-      status, output = check_aggregate(aggregator.summary(target_check[:interval] || 300))
+    locked_run(self, redis, lock_key, cluster_check[:interval], Time.now.to_i, logger) do
+      status, output = check_aggregate(aggregator.summary(cluster_check[:target_interval]))
       logger.puts output
       send_payload EXIT_CODES[status], output
       ok "Check executed successfully (#{status}: #{output})"
@@ -107,11 +115,6 @@ private
     return state, message
   end
 
-  def api
-    @api ||= SensuApi.new(
-      *sensu_settings[:api].values_at(:host, :port, :user, :password))
-  end
-
   def sensu_settings
     @sensu_settings ||=
       Sensu::Settings.get(:config_dirs => ["/etc/sensu/conf.d"]) or
@@ -119,18 +122,11 @@ private
   end
 
   def send_payload(status, output)
-    payload = target_check.merge(
+    payload = cluster_check.merge(
       :status => status,
       :output => output,
       :source => config[:cluster_name],
-      :name   => config[:check],
-      :page   => cluster_check[:page],
-      :team   => cluster_check[:team],
-      :notification_email => cluster_check[:notification_email],
-      :irc_channels       => cluster_check[:irc_channels])
-
-    payload[:runbook] = cluster_check[:runbook] if cluster_check[:runbook] != '-'
-    payload[:tip]     = cluster_check[:tip] if cluster_check[:tip] != '-'
+      :name   => config[:check])
     payload.delete :command
 
     sock = TCPSocket.new('localhost', 3030)
@@ -142,15 +138,9 @@ private
     return {} if ENV['DEBUG']
     return JSON.parse(ENV['DEBUG_CC']) if ENV['DEBUG_CC']
 
-    sensu_settings[:checks][:"#{config[:cluster_name]}_#{config[:check]}"] or
-      raise "#{config[:cluster_name]}_#{config[:check]} not found in sensu settings"
-  end
-
-  def target_check
-    @target_check ||=
-      sensu_settings[:checks][config[:check]] or
-      api.request("/checks/#{config[:check]}") or
-        raise "#{config[:check]} not found in sensu settings"
+    @cluster_check ||=
+      sensu_settings[:checks][:"#{config[:cluster_name]}_#{config[:check]}"] or
+        raise "#{config[:cluster_name]}_#{config[:check]} not found"
   end
 end
 
@@ -229,35 +219,6 @@ class TinyRedisClient
 
   def close
     @socket.close
-  end
-end
-
-class SensuApi
-  attr_accessor :host, :port, :user, :password
-
-  def initialize(host, port, user=nil, password=nil)
-    @host = host
-    @port = port
-    @user = user
-    @password = password
-  end
-
-  def request(path, opts={})
-    uri = URI("http://#{host}:#{port}#{path}")
-    uri.query = URI.encode_www_form(opts)
-
-    req = Net::HTTP::Get.new(uri)
-    req.basic_auth(user, password) if user && password
-
-    res = Net::HTTP.start(uri.hostname, uri.port) do |http|
-      http.request(req)
-    end
-
-    if res.is_a?(Net::HTTPSuccess)
-      JSON.parse(res.body, :symbolize_names => true)
-    else
-      raise "Error querying sensu api: #{res.code} '#{res.body}'"
-    end
   end
 end
 

@@ -10,10 +10,10 @@ describe CheckCluster do
   end
 
   let(:sensu_settings) do
-    { :checks => { :test_cluster_test_check => { },
-                   :test_check => { } },
-      :api => { :host => 'localhost',
-                :port => '9999' } }
+    { :checks => {
+        :test_cluster_test_check => {
+          :interval => 300,
+          :target_interval => 300 } } }
   end
 
   let(:redis)  do
@@ -27,18 +27,6 @@ describe CheckCluster do
   end
 
   let(:logger) { StringIO.new("") }
-
-  # let(:api) do
-  #   double(:api).tap do |api|
-  #     api.stub(:request).
-  #       with("/aggregates/test_check", {:age=>30}).
-  #       and_return([1, 2, 3])
-
-  #     api.stub(:request).
-  #       with("/aggregates/test_check/3").
-  #       and_return('ok' => 1, 'total' => 1)
-  #   end
-  # end
 
   let(:aggregator) do
     double(:aggregator).tap do |agg|
