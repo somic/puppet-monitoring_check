@@ -47,14 +47,17 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       return
     end
 
-    if !cluster_check[:interval] || !cluster_check[:target_interval]
-      critical "Please configure interval and target_interval"
+    if !cluster_check[:interval]
+      critical "Please configure interval"
       return
     end
 
     lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
-    locked_run(self, redis, lock_key, cluster_check[:interval], Time.now.to_i, logger) do
-      status, output = check_aggregate(aggregator.summary(cluster_check[:target_interval]))
+    interval = cluster_check[:interval]
+    target_interval = cluster_check[:target_interval] || cluster_check[:interval]
+
+    locked_run(self, redis, lock_key, interval, Time.now.to_i, logger) do
+      status, output = check_aggregate(aggregator.summary(target_interval))
       logger.puts output
       send_payload EXIT_CODES[status], output
       ok "Check executed successfully (#{status}: #{output})"
