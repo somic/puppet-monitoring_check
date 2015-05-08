@@ -30,7 +30,8 @@ define monitoring_check::cluster (
     $sla                   = undef,
     $page                  = undef,
     $team                  = undef,
-    $dependencies          = undef
+    $dependencies          = undef,
+    $sensu_custom          = undef
 ) {
   require monitoring_check::check_cluster_install
 
@@ -49,6 +50,7 @@ define monitoring_check::cluster (
     sla                 => $sla,
     page                => $page,
     team                => $team,
-    dependencies        => $dependencies
+    dependencies        => $dependencies,
+    sensu_custom        => $sensu_custom
   }
 }
