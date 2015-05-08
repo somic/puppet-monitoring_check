@@ -60,7 +60,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
 private
 
   def aggregator
-    RedisCheckAggregate.new(redis, config[:check], [config[:cluster_name]])
+    RedisCheckAggregate.new(redis, config[:check])
   end
 
   def check_sensu_version
@@ -262,14 +262,13 @@ class SensuApi
 end
 
 class RedisCheckAggregate
-  def initialize(redis, check, ignores=[])
-    @check   = check
-    @redis   = redis
-    @ignores = ignores
+  def initialize(redis, check)
+    @check = check
+    @redis = redis
   end
 
   def summary(interval)
-    all     = last_execution find_servers
+    all     = last_execution(find_servers).reject{|_,time| time == ""}
     active  = all.select { |_, time| time.to_i >= Time.now.to_i - interval }
     { :total    => all.size,
       :ok       => active.count do |server, _|
@@ -293,7 +292,6 @@ class RedisCheckAggregate
 
   def find_servers
     # TODO: reimplement using @redis.scan for webscale
-    @servers ||= @redis.keys("execution:*:#@check").
-      map {|key| key.split(':')[1]}.reject{|server| @ignores.include? server}
+    @servers ||= @redis.keys("execution:*:#@check").map {|key| key.split(':')[1]}
   end
 end
