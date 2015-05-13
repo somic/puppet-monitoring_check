@@ -40,6 +40,10 @@ module TinyRedis
       end
     end
 
+    def ttl
+      redis.ttl(key)
+    end
+
     private
 
     def expire(seconds=0)
