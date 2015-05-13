@@ -23,6 +23,16 @@ class CheckServerSide < Sensu::Plugin::Check::CLI
   attr_reader :check, :new_check
 
   def run
+    begin
+      do_run
+    rescue => e
+      # intentionally never let placeholder check fail -
+      # log unexpected issues for debugging instead
+      ok "ran actual check: exception: msg='#{e.message}' backtrace=#{e.backtrace}"
+    end
+  end
+
+  def do_run
     @check = settings['checks'][config[:check]]
 
     # try to obtain "lock" from redis;
@@ -35,15 +45,19 @@ class CheckServerSide < Sensu::Plugin::Check::CLI
       @new_check = { 'executed' => Time.now.to_i }.merge(check)
       new_check['command'] = new_check.delete('actual_command')
       new_check['name'] = new_check.delete('actual_name')
-      new_check['output'] = `( #{new_check['command']} ) 2>&1`
-      new_check['status'] = $?.success? ? 0 : 2
+      new_check['output'] = `( #{new_check['command']} ) 2>&1`.strip
+      new_check['status'] = $?.exitstatus
       new_check['issued'] = Time.now.to_i
       send_new_check_event_to_local_sensu_client
     }
 
     # placeholder check never does anything interesting and we never ever
     # want to see it in uchiwa or anywhere else
-    ok "noop"
+    if @new_check
+      ok "ran actual check: exit_code=#{new_check['status']} output='#{new_check['output']}'"
+    else
+      ok "skipped actual check: lock detected ttl=#{@mutex.ttl} seconds"
+    end
   end
 
   def redis
