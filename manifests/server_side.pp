@@ -26,13 +26,23 @@
 # Most parameters are the same as monitoring_check.
 #
 # [*source*]
-# String that identifies this event. Should not be tied to a host that generated
+# String that identifies the source of this event or an entity (such as
+# cluster, environment, datacenter, etc) to which it belongs.
+# Should not be tied to a host that generated
 # this event because it can come from any host where this check is deployed.
+#
+# [*event_name*]
+# String that sets the name of the event that this check will generate.
+# If not set, defaults to $title.
+# Useful when $title includes disambiguation string that is not needed in event name.
+# For example, allows to send "switch_health_check" events instead of
+# "switch_health_check_switch001", "switch_health_check_switch002", etc.
 #
 define monitoring_check::server_side (
   $command,
   $runbook,
   $source,
+  $event_name            = undef,
   $needs_sudo            = false,
   $sudo_user             = 'root',
   $check_every           = '1m',
@@ -56,12 +66,13 @@ define monitoring_check::server_side (
   $annotation            = annotation_guess(),
 ) {
   validate_string($source)
+  validate_string($event_name)
 
   include monitoring_check::server_side::install
 
   $custom_server_side = {
     actual_command => $command,
-    actual_name    => $title,
+    actual_name    => pick($event_name, $title),
     source         => $source,
   }
 
