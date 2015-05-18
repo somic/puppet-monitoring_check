@@ -60,7 +60,7 @@ describe 'monitoring_check::server_side' do
     }}
 
     it {
-      expect { should compile }.to raise_error(Puppet::Error, /not a string/)
+      expect { should compile }.to raise_error(/not a string/)
     }
   end
   
