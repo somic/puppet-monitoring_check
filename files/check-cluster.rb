@@ -233,30 +233,30 @@ class RedisCheckAggregate
   end
 
   def summary(interval)
-    all     = last_execution(find_servers).reject{|_,time| time == ""}
-    active  = all.select { |_, time| time.to_i >= Time.now.to_i - interval }
+    # we only care about entries with executed timestamp
+    all     = last_execution(find_servers).select{|_,data| data[0]}
+    active  = all.select { |_, data| data[0].to_i >= Time.now.to_i - interval }
     { :total    => all.size,
-      :ok       => active.count do |server, _|
-        @redis.lindex("history:#{server}:#@check", -1) == '0'
-      end,
+      :ok       => active.count{ |_,data| data[1].to_i == 0 },
       :silenced => all.count do |server, time|
-        %W{ stash:silence/#{server} stash:silence/#@check
-            stash:silence/#{server}/#@check }.any? {|key| @redis.get(key) }
+        [server, @check, "#{server}/#@check"].map{|s| "stash:silence/#{s}"}.
+          any? {|key| @redis.get(key) }
       end }
   end
 
   private
 
-  # { server_name => timestamp, ... }
+  # { server_name => [timestamp, status], ... }
   def last_execution(servers)
     servers.inject({}) do |hash, server|
-      hash[server] = @redis.get("execution:#{server}:#@check")
-      hash
+      hash.merge!(
+        server => JSON.parse(@redis.get("result:#{server}:#@check")).
+                    values_at("executed", "status"))
     end
   end
 
   def find_servers
     # TODO: reimplement using @redis.scan for webscale
-    @servers ||= @redis.keys("execution:*:#@check").map {|key| key.split(':')[1]}
+    @servers ||= @redis.keys("result:*:#@check").map {|key| key.split(':')[1]}
   end
 end
