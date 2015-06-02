@@ -15,6 +15,7 @@ describe 'monitoring_check::server_side' do
     :lsbdistcodename => 'Lucid',
     :operatingsystem => 'Ubuntu',
     :puppetversion => '3.6.2',
+    :habitat       => 'somehabitat',
   }}
 
   let(:pre_condition) { 'include sensu' }
