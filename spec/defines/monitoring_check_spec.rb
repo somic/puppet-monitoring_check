@@ -26,7 +26,7 @@ describe 'monitoring_check' do
     let(:pre_condition) { 'include sensu' }
     let(:title) { 'examplecheck' }
     let(:hiera_data) {{ :'sensu_handlers::teams' => { 'operations' => {}, 'other' => {}} }}
-    let(:facts) { { :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
+    let(:facts) { { :habitat => 'somehabitat', :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
 
     let(:default_interval) { 60 }
 
@@ -51,6 +51,7 @@ describe 'monitoring_check' do
             "project"=>false,
             "page"=>true,
             "tip"=>false,
+            "habitat"=>"somehabitat",
           })
       end
       it { should contain_file('/etc/sensu/team_data.json').with_content(/other/) }
@@ -78,7 +79,9 @@ describe 'monitoring_check' do
         "sla"=>"No SLA defined.",
         "team"=>"other",
         "annotation"=>"mock_annotation",
-        "notification_email"=>"undef"})
+        "notification_email"=>"undef",
+        "habitat"=>"somehabitat",
+      })
       }
     end
 
@@ -108,7 +111,8 @@ describe 'monitoring_check' do
           "sla"=>"No SLA defined.",
           "team"=>"operations",
           "notification_email"=>"undef",
-          "annotation"=>"mock_annotation"
+          "annotation"=>"mock_annotation",
+          "habitat"=>"somehabitat",
         }
       )}
     end
@@ -127,7 +131,8 @@ describe 'monitoring_check' do
         "sla"=>"No SLA defined.",
         "team"=>"overridden",
         "notification_email"=>"undef",
-        "annotation"=>"mock_annotation"
+        "annotation"=>"mock_annotation",
+        "habitat"=>"somehabitat",
         }
       )}
     end
@@ -146,7 +151,8 @@ describe 'monitoring_check' do
           "sla"=>"No SLA defined.",
           "team"=>"operations",
           "annotation"=>"mock_annotation",
-          "notification_email"=>"undef"
+          "notification_email"=>"undef",
+          "habitat"=>"somehabitat",
         }
       )}
     end
@@ -165,7 +171,8 @@ describe 'monitoring_check' do
           "sla"=>"custom SLA",
           "team"=>"operations",
           "annotation"=>"mock_annotation",
-          "notification_email"=>"undef"
+          "notification_email"=>"undef",
+          "habitat"=>"somehabitat",
         }
       )}
     end
@@ -200,7 +207,7 @@ describe 'monitoring_check' do
     end
 
     context "with override_sensu_checks_to set and can_override true" do
-      let(:facts) { { :override_sensu_checks_to => 'custom@override', :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
+      let(:facts) { { :habitat => "somehabitat", :override_sensu_checks_to => 'custom@override', :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
       let(:params) { {:command => 'bar', :runbook => 'http://gronk' } }
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"=>"http://gronk",
@@ -214,12 +221,13 @@ describe 'monitoring_check' do
         "sla"=>"No SLA defined.",
         "team"=>"noop",
         "notification_email"=>"custom@override",
-        "annotation"=>"mock_annotation"
+        "annotation"=>"mock_annotation",
+        "habitat"=>"somehabitat",
         }
       )}
     end
     context "with override_sensu_checks_to set and can_override false" do
-      let(:facts) { { :override_sensu_checks_to => 'custom@override', :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
+      let(:facts) { { :habitat => "somehabitat", :override_sensu_checks_to => 'custom@override', :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :can_override => false } }
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"=>"http://gronk",
@@ -233,7 +241,8 @@ describe 'monitoring_check' do
         "sla"=>"No SLA defined.",
         "team"=>"operations",
         "notification_email"=>"undef",
-        "annotation"=>"mock_annotation"
+        "annotation"=>"mock_annotation",
+        "habitat"=>"somehabitat",
         }
       )}
     end

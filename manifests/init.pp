@@ -238,6 +238,7 @@ define monitoring_check (
         project               => $project,
         page                  => str2bool($page),
         tip                   => $tip,
+        habitat               => $::habitat,
       }, $override_custom), $sensu_custom)
     }
   }
