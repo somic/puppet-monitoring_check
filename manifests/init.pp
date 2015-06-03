@@ -118,11 +118,6 @@
 # normal mechanism. Setting this to false will stop this mechanism from applying
 # to a check.
 #
-# [*annotation*]
-# The line of code that should be referenced as the "originator" for this
-# monitoring check. Obviously there is an entire call stack to choose from.
-# Try to use the most relevant/helpful value here.
-#
 define monitoring_check (
   $command,
   $runbook,
@@ -146,7 +141,6 @@ define monitoring_check (
   $low_flap_threshold    = undef,
   $high_flap_threshold   = undef,
   $can_override          = true,
-  $annotation            = annotation_guess(),
 ) {
 
   include monitoring_check::params
@@ -229,7 +223,6 @@ define monitoring_check (
         alert_after           => $alert_after_s,
         realert_every         => $realert_every,
         runbook               => $runbook,
-        annotation            => $annotation,
         sla                   => $sla,
         team                  => $team,
         irc_channels          => $irc_channel_array,

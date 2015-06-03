@@ -63,7 +63,6 @@ define monitoring_check::server_side (
   $low_flap_threshold    = undef,
   $high_flap_threshold   = undef,
   $can_override          = true,
-  $annotation            = annotation_guess(),
 ) {
   validate_string($source)
   validate_string($event_name)
@@ -102,7 +101,6 @@ define monitoring_check::server_side (
     low_flap_threshold    => $low_flap_threshold,
     high_flap_threshold   => $high_flap_threshold,
     can_override          => $can_override,
-    annotation            => $annotation,
   }
 
 }

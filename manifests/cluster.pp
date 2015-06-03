@@ -19,7 +19,6 @@ define monitoring_check::cluster (
     $command_add           = '',
     $runbook               = '-', # these are special: if '-', value will
     $tip                   = '-', # be taken from target check
-    $annotation            = 'cluster_check',
     $check_every           = undef,
     $alert_after           = undef,
     $realert_every         = undef,
@@ -38,7 +37,6 @@ define monitoring_check::cluster (
   monitoring_check { "${cluster}_${name}":
     command             => "/etc/sensu/plugins/check-cluster.rb  -N ${cluster} -c ${check} ${command_add}",
     runbook             => $runbook,
-    annotation          => $annotation,
     check_every         => $check_every,
     alert_after         => $alert_after,
     realert_every       => $realert_every,

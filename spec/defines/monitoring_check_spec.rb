@@ -2,12 +2,6 @@ require 'spec_helper'
 
 describe 'monitoring_check' do
 
-  # Use let! to force the function to be initialize before it is lazily loaded
-  let!(:annotation_guess) { MockFunction.new('annotation_guess') { |f|
-      f.stubs(:call).with([]).returns('mock_annotation')
-    }
-  }
-
   context 'without teams data' do
     let(:pre_condition) { 'include sensu' }
     let(:title) { 'examplecheck' }
@@ -42,7 +36,6 @@ describe 'monitoring_check' do
             "alert_after"=>"0",
             "realert_every"=>"-1",
             "runbook"=>"http://gronk",
-            "annotation"=>"mock_annotation",
             "sla"=>"No SLA defined.",
             "team"=>"operations",
             "irc_channels"=>:undef,
@@ -78,7 +71,6 @@ describe 'monitoring_check' do
         "realert_every"=>"-1",
         "sla"=>"No SLA defined.",
         "team"=>"other",
-        "annotation"=>"mock_annotation",
         "notification_email"=>"undef",
         "habitat"=>"somehabitat",
       })
@@ -111,7 +103,6 @@ describe 'monitoring_check' do
           "sla"=>"No SLA defined.",
           "team"=>"operations",
           "notification_email"=>"undef",
-          "annotation"=>"mock_annotation",
           "habitat"=>"somehabitat",
         }
       )}
@@ -131,7 +122,6 @@ describe 'monitoring_check' do
         "sla"=>"No SLA defined.",
         "team"=>"overridden",
         "notification_email"=>"undef",
-        "annotation"=>"mock_annotation",
         "habitat"=>"somehabitat",
         }
       )}
@@ -150,7 +140,6 @@ describe 'monitoring_check' do
           "realert_every"=>"-1",
           "sla"=>"No SLA defined.",
           "team"=>"operations",
-          "annotation"=>"mock_annotation",
           "notification_email"=>"undef",
           "habitat"=>"somehabitat",
         }
@@ -170,7 +159,6 @@ describe 'monitoring_check' do
           "realert_every"=>"-1",
           "sla"=>"custom SLA",
           "team"=>"operations",
-          "annotation"=>"mock_annotation",
           "notification_email"=>"undef",
           "habitat"=>"somehabitat",
         }
@@ -221,7 +209,6 @@ describe 'monitoring_check' do
         "sla"=>"No SLA defined.",
         "team"=>"noop",
         "notification_email"=>"custom@override",
-        "annotation"=>"mock_annotation",
         "habitat"=>"somehabitat",
         }
       )}
@@ -241,7 +228,6 @@ describe 'monitoring_check' do
         "sla"=>"No SLA defined.",
         "team"=>"operations",
         "notification_email"=>"undef",
-        "annotation"=>"mock_annotation",
         "habitat"=>"somehabitat",
         }
       )}
