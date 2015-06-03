@@ -9,7 +9,6 @@ cat <<EOF >/tmp/test-sensu-alert.json
   "alert_after": 0,
   "realert_every": "1",
   "runbook": "unknown",
-  "annotation": "unknown",
   "sla": "No SLA defined.",
   "dependencies": [],
   "team": "noop",
