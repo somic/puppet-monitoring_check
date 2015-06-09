@@ -166,6 +166,12 @@ define monitoring_check (
   validate_bool($ticket)
   validate_bool($handle)
 
+  if $handle {
+    $handlers = ['default'] # Use the default handler, it'll route things via escalation_team
+  } else {
+    $handlers = undef
+  }
+
   validate_hash($sensu_custom)
 
   $interval_s = human_time_to_seconds($check_every)
@@ -217,7 +223,7 @@ define monitoring_check (
 
   if str2bool($use_sensu) {
     sensu::check { $name:
-      handlers            => 'default', # Always use the default handler, it'll route things via escalation_team
+      handlers            => $handlers,
       handle              => $handle,
       command             => $real_command,
       interval            => $interval_s,
