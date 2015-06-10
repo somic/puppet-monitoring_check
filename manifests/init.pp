@@ -15,7 +15,8 @@
 #
 # [*handlers*]
 # An array of handlers to use for this check. Set to [] if this check should
-# spawn no handlers. Defaults to ['default'].
+# spawn no handlers. Defaults to ['default'], which uses standard Yelp
+# sensu_handlers that are 'team'-aware.
 #
 # [*needs_sudo*]
 # Boolean for if to run this check with sudo. Defaults to false
@@ -125,7 +126,7 @@
 define monitoring_check (
   $command,
   $runbook,
-  $handlers              = ['default'], # Use the default handler, it'll route things via escalation_team
+  $handlers              = ['default'],
   $needs_sudo            = false,
   $sudo_user             = 'root',
   $check_every           = '1m',
