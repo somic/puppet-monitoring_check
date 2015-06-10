@@ -14,7 +14,7 @@
 # http://...some.uri. This is required.
 #
 # [*handle*]
-# Boolean to send this check to handlers. Defaults to true
+# Boolean to send this check to handlers. Defaults to undef
 #
 # [*needs_sudo*]
 # Boolean for if to run this check with sudo. Defaults to false
