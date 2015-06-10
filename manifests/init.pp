@@ -13,8 +13,9 @@
 # Should be of the form: y/my_runbook_name (preferred), or
 # http://...some.uri. This is required.
 #
-# [*handle*]
-# Boolean to send this check to handlers. Defaults to undef
+# [*handlers*]
+# An array of handlers to use for this check. Set to [] if this check should
+# spawn no handlers. Defaults to ['default'].
 #
 # [*needs_sudo*]
 # Boolean for if to run this check with sudo. Defaults to false
@@ -124,7 +125,7 @@
 define monitoring_check (
   $command,
   $runbook,
-  $handle                = undef,
+  $handlers              = ['default'], # Use the default handler, it'll route things via escalation_team
   $needs_sudo            = false,
   $sudo_user             = 'root',
   $check_every           = '1m',
@@ -165,11 +166,7 @@ define monitoring_check (
   validate_re($team, "^(${team_names})$")
   validate_bool($ticket)
 
-  $handlers = ['default'] # Use the default handler, it'll route things via escalation_team
-  if $handle == false {
-    $handlers = undef
-  }
-
+  validate_array($handlers)
   validate_hash($sensu_custom)
 
   $interval_s = human_time_to_seconds($check_every)
@@ -222,7 +219,6 @@ define monitoring_check (
   if str2bool($use_sensu) {
     sensu::check { $name:
       handlers            => $handlers,
-      handle              => $handle,
       command             => $real_command,
       interval            => $interval_s,
       timeout             => $timeout_s,
