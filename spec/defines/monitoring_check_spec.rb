@@ -51,6 +51,13 @@ describe 'monitoring_check' do
       it { should contain_file('/etc/sensu/team_data.json').with_content(/operations/) }
     end
 
+    context "no handlers" do
+      let(:params) { {:command => 'bar', :runbook => 'http://gronk', :handlers => []} }
+      it do
+        should contain_sensu__check('examplecheck').with_handlers([])
+      end
+    end
+
     context "bad runbook (not a uri)" do
       let(:params) { {:command => 'bar', :runbook => 'gronk'} }
       it do
