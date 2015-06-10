@@ -124,7 +124,7 @@
 define monitoring_check (
   $command,
   $runbook,
-  $handle                = true,
+  $handle                = undef,
   $needs_sudo            = false,
   $sudo_user             = 'root',
   $check_every           = '1m',
@@ -166,9 +166,8 @@ define monitoring_check (
   validate_bool($ticket)
   validate_bool($handle)
 
-  if $handle {
-    $handlers = ['default'] # Use the default handler, it'll route things via escalation_team
-  } else {
+  $handlers = ['default'] # Use the default handler, it'll route things via escalation_team
+  if $handle == false {
     $handlers = undef
   }
 
