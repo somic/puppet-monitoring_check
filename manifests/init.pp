@@ -164,7 +164,6 @@ define monitoring_check (
   $team_names = join(keys($team_data), '|')
   validate_re($team, "^(${team_names})$")
   validate_bool($ticket)
-  validate_bool($handle)
 
   $handlers = ['default'] # Use the default handler, it'll route things via escalation_team
   if $handle == false {
