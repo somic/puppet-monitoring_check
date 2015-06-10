@@ -21,7 +21,7 @@ cat <<EOF >/tmp/test-sensu-alert.json
   "output": "Test output from send-test-sensu-alert",
   "status": 2,
   "command": "send-test-sensu-alert",
-  "watchdog_timer": null
+  "ttl": null
 }
 EOF
 
