@@ -180,8 +180,8 @@ define monitoring_check (
   }
 
   $alert_after_s = human_time_to_seconds($alert_after)
-  validate_re($alert_after_s, '^\d+$')
-  validate_re($realert_every, '^(-)?\d+$')
+  validate_re("$alert_after_s", '^\d+$')
+  validate_re("$realert_every", '^(-)?\d+$')
 
   # TODO: Handle this logic at the handler level?
   if $irc_channels != undef {
