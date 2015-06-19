@@ -118,6 +118,12 @@
 # parameter (to the value of $::override_sensu_checks_to).
 # Defaults to true.
 #
+# [*source*]
+# String that identifies the source of this event or an entity (such as
+# cluster, environment, datacenter, etc) to which it belongs.
+# Should not be tied to a host that generated
+# this event because it can come from any host where this check is deployed.
+#
 # This, by default allows you to set the $::override_sensu_checks_to fact
 # in /etc/facter/facts.d to stop checks on a single machine from alerting via the
 # normal mechanism. Setting this to false will stop this mechanism from applying
@@ -146,6 +152,7 @@ define monitoring_check (
   $sensu_custom          = {},
   $low_flap_threshold    = undef,
   $high_flap_threshold   = undef,
+  $source                = undef,
   $can_override          = true,
 ) {
 
@@ -183,6 +190,10 @@ define monitoring_check (
   validate_re("$alert_after_s", '^\d+$')
   validate_re("$realert_every", '^(-)?\d+$')
 
+  if $source != undef {
+    validate_string($source)
+  }
+
   # TODO: Handle this logic at the handler level?
   if $irc_channels != undef {
     $irc_channel_array = any2array($irc_channels)
@@ -207,15 +218,37 @@ define monitoring_check (
     $real_command = $command
   }
 
+
+  $base_dict = {
+    alert_after           => $alert_after_s,
+    realert_every         => $realert_every,
+    runbook               => $runbook,
+    sla                   => $sla,
+    team                  => $team,
+    irc_channels          => $irc_channel_array,
+    notification_email    => $notification_email,
+    ticket                => $ticket,
+    project               => $project,
+    page                  => str2bool($page),
+    tip                   => $tip,
+    habitat               => $::habitat,
+  }
+  if $source != undef {
+    $base_with_source = merge($base_dict, {
+      source => $source
+    })
+  } else {
+    $base_with_source = $base_dict
+  }
   if getvar('::override_sensu_checks_to') and $can_override {
-    $override_custom = {
+    $with_override = merge($base_with_source, {
       'team'             => 'noop',
       notification_email => $::override_sensu_checks_to,
-    }
+    })
+  } else {
+    $with_override = $base_with_source
   }
-  else {
-    $override_custom = {}
-  }
+  $custom = merge($with_override, $sensu_custom)
 
   if str2bool($use_sensu) {
     sensu::check { $name:
@@ -226,20 +259,7 @@ define monitoring_check (
       low_flap_threshold  => $high_flap_threshold,
       high_flap_threshold => $low_flap_threshold,
       dependencies        => any2array($dependencies),
-      custom              => merge(merge({
-        alert_after           => $alert_after_s,
-        realert_every         => $realert_every,
-        runbook               => $runbook,
-        sla                   => $sla,
-        team                  => $team,
-        irc_channels          => $irc_channel_array,
-        notification_email    => $notification_email,
-        ticket                => $ticket,
-        project               => $project,
-        page                  => str2bool($page),
-        tip                   => $tip,
-        habitat               => $::habitat,
-      }, $override_custom), $sensu_custom)
+      custom              => $custom,
     }
   }
 }
