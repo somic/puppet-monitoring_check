@@ -33,18 +33,18 @@ describe 'monitoring_check' do
           .with_interval(default_interval) \
           .with_command('bar') \
           .with_custom({
-            "alert_after"=>"0",
-            "realert_every"=>"-1",
-            "runbook"=>"http://gronk",
-            "sla"=>"No SLA defined.",
-            "team"=>"operations",
-            "irc_channels"=>:undef,
-            "notification_email"=>"undef",
-            "ticket"=>false,
-            "project"=>false,
-            "page"=>true,
-            "tip"=>false,
-            "habitat"=>"somehabitat",
+            "alert_after"        => "0",
+            "realert_every"      => "-1",
+            "runbook"            => "http://gronk",
+            "sla"                => "No SLA defined.",
+            "team"               => "operations",
+            "irc_channels"       => :undef,
+            "notification_email" => "undef",
+            "ticket"             => false,
+            "project"            => false,
+            "page"               => true,
+            "tip"                => false,
+            "habitat"            => "somehabitat",
           })
       end
       it { should contain_file('/etc/sensu/team_data.json').with_content(/other/) }
@@ -68,18 +68,18 @@ describe 'monitoring_check' do
     context "custom team" do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :team => 'other'} }
       it { should contain_sensu__check('examplecheck').with_custom({
-        "runbook"=>"http://gronk",
-        "ticket"=>false,
-        "irc_channels"=>:undef,
-        "tip"=>false,
-        "project"=>false,
-        "alert_after"=>"0",
-        "page"=>false,
-        "realert_every"=>"-1",
-        "sla"=>"No SLA defined.",
-        "team"=>"other",
-        "notification_email"=>"undef",
-        "habitat"=>"somehabitat",
+        "runbook"            => "http://gronk",
+        "ticket"             => false,
+        "irc_channels"       => :undef,
+        "tip"                => false,
+        "project"            => false,
+        "alert_after"        => "0",
+        "page"               => false,
+        "realert_every"      => "-1",
+        "sla"                => "No SLA defined.",
+        "team"               => "other",
+        "notification_email" => "undef",
+        "habitat"            => "somehabitat",
       })
       }
     end
@@ -98,19 +98,19 @@ describe 'monitoring_check' do
     context "with custom" do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :sensu_custom => { 'foo' => 'bar' } } }
       it { should contain_sensu__check('examplecheck').with_custom({
-          "runbook"=>"http://gronk",
-          "ticket"=>false,
-          "irc_channels"=>:undef,
-          "tip"=>false,
-          "project"=>false,
-          "alert_after"=>"0",
-          "foo"=>"bar",
-          "page"=>false,
-          "realert_every"=>"-1",
-          "sla"=>"No SLA defined.",
-          "team"=>"operations",
-          "notification_email"=>"undef",
-          "habitat"=>"somehabitat",
+          "runbook"            => "http://gronk",
+          "ticket"             => false,
+          "irc_channels"       => :undef,
+          "tip"                => false,
+          "project"            => false,
+          "alert_after"        => "0",
+          "foo"                => "bar",
+          "page"               => false,
+          "realert_every"      => "-1",
+          "sla"                => "No SLA defined.",
+          "team"               => "operations",
+          "notification_email" => "undef",
+          "habitat"            => "somehabitat",
         }
       )}
     end
@@ -118,18 +118,18 @@ describe 'monitoring_check' do
     context "with custom - overriding" do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :sensu_custom => { 'team' => 'overridden' } } }
       it { should contain_sensu__check('examplecheck').with_custom({
-        "runbook"=>"http://gronk",
-        "ticket"=>false,
-        "irc_channels"=>:undef,
-        "tip"=>false,
-        "project"=>false,
-        "alert_after"=>"0",
-        "page"=>false,
-        "realert_every"=>"-1",
-        "sla"=>"No SLA defined.",
-        "team"=>"overridden",
-        "notification_email"=>"undef",
-        "habitat"=>"somehabitat",
+        "runbook"            => "http://gronk",
+        "ticket"             => false,
+        "irc_channels"       => :undef,
+        "tip"                => false,
+        "project"            => false,
+        "alert_after"        => "0",
+        "page"               => false,
+        "realert_every"      => "-1",
+        "sla"                => "No SLA defined.",
+        "team"               => "overridden",
+        "notification_email" => "undef",
+        "habitat"            => "somehabitat",
         }
       )}
     end
@@ -137,18 +137,18 @@ describe 'monitoring_check' do
     context "nowake, nopage" do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => 'false'} }
       it { should contain_sensu__check('examplecheck').with_custom({
-          "runbook"=>"http://gronk",
-          "ticket"=>false,
-          "irc_channels"=>:undef,
-          "tip"=>false,
-          "project"=>false,
-          "alert_after"=>"0",
-          "page"=>false,
-          "realert_every"=>"-1",
-          "sla"=>"No SLA defined.",
-          "team"=>"operations",
-          "notification_email"=>"undef",
-          "habitat"=>"somehabitat",
+          "runbook"            => "http://gronk",
+          "ticket"             => false,
+          "irc_channels"       => :undef,
+          "tip"                => false,
+          "project"            => false,
+          "alert_after"        => "0",
+          "page"               => false,
+          "realert_every"      => "-1",
+          "sla"                => "No SLA defined.",
+          "team"               => "operations",
+          "notification_email" => "undef",
+          "habitat"            => "somehabitat",
         }
       )}
     end
@@ -156,18 +156,18 @@ describe 'monitoring_check' do
     context "With a SLA defined" do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => 'false', :sla=>'custom SLA'} }
       it { should contain_sensu__check('examplecheck').with_custom({
-          "runbook"=>"http://gronk",
-          "ticket"=>false,
-          "irc_channels"=>:undef,
-          "tip"=>false,
-          "project"=>false,
-          "alert_after"=>"0",
-          "page"=>false,
-          "realert_every"=>"-1",
-          "sla"=>"custom SLA",
-          "team"=>"operations",
-          "notification_email"=>"undef",
-          "habitat"=>"somehabitat",
+          "runbook"            => "http://gronk",
+          "ticket"             => false,
+          "irc_channels"       => :undef,
+          "tip"                => false,
+          "project"            => false,
+          "alert_after"        => "0",
+          "page"               => false,
+          "realert_every"      => "-1",
+          "sla"                => "custom SLA",
+          "team"               => "operations",
+          "notification_email" => "undef",
+          "habitat"            => "somehabitat",
         }
       )}
     end
@@ -205,18 +205,18 @@ describe 'monitoring_check' do
       let(:facts) { { :habitat => "somehabitat", :override_sensu_checks_to => 'custom@override', :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
       let(:params) { {:command => 'bar', :runbook => 'http://gronk' } }
       it { should contain_sensu__check('examplecheck').with_custom({
-        "runbook"=>"http://gronk",
-        "ticket"=>false,
-        "irc_channels"=>:undef,
-        "tip"=>false,
-        "project"=>false,
-        "alert_after"=>"0",
-        "page"=>false,
-        "realert_every"=>"-1",
-        "sla"=>"No SLA defined.",
-        "team"=>"noop",
-        "notification_email"=>"custom@override",
-        "habitat"=>"somehabitat",
+        "runbook"            => "http://gronk",
+        "ticket"             => false,
+        "irc_channels"       => :undef,
+        "tip"                => false,
+        "project"            => false,
+        "alert_after"        => "0",
+        "page"               => false,
+        "realert_every"      => "-1",
+        "sla"                => "No SLA defined.",
+        "team"               => "noop",
+        "notification_email" => "custom@override",
+        "habitat"            => "somehabitat",
         }
       )}
     end
@@ -224,18 +224,38 @@ describe 'monitoring_check' do
       let(:facts) { { :habitat => "somehabitat", :override_sensu_checks_to => 'custom@override', :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :can_override => false } }
       it { should contain_sensu__check('examplecheck').with_custom({
-        "runbook"=>"http://gronk",
-        "ticket"=>false,
-        "irc_channels"=>:undef,
-        "tip"=>false,
-        "project"=>false,
-        "alert_after"=>"0",
-        "page"=>false,
-        "realert_every"=>"-1",
-        "sla"=>"No SLA defined.",
-        "team"=>"operations",
-        "notification_email"=>"undef",
-        "habitat"=>"somehabitat",
+        "runbook"            => "http://gronk",
+        "ticket"             => false,
+        "irc_channels"       => :undef,
+        "tip"                => false,
+        "project"            => false,
+        "alert_after"        => "0",
+        "page"               => false,
+        "realert_every"      => "-1",
+        "sla"                => "No SLA defined.",
+        "team"               => "operations",
+        "notification_email" => "undef",
+        "habitat"            => "somehabitat",
+        }
+      )}
+    end
+    context "with a source" do
+      let(:facts) { { :habitat => "somehabitat", :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
+      let(:params) { {:command => 'bar', :runbook => 'http://gronk', :source => 'mysource' } }
+      it { should contain_sensu__check('examplecheck').with_custom({
+        "runbook"            => "http://gronk",
+        "ticket"             => false,
+        "irc_channels"       => :undef,
+        "tip"                => false,
+        "project"            => false,
+        "alert_after"        => "0",
+        "page"               => false,
+        "realert_every"      => "-1",
+        "sla"                => "No SLA defined.",
+        "team"               => "operations",
+        "notification_email" => "undef",
+        "habitat"            => "somehabitat",
+        "source"           => "mysource"
         }
       )}
     end
