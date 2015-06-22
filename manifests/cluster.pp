@@ -14,7 +14,7 @@
 #
 #
 define monitoring_check::cluster (
-    $cluster,
+    $cluster               = $::region,
     $check                 = $name,
     $command_add           = '',
     $runbook               = '-', # these are special: if '-', value will
