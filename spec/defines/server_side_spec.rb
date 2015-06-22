@@ -23,34 +23,42 @@ describe 'monitoring_check::server_side' do
   context 'by default' do
     let(:params) {{
       :command => 'foo', :runbook => 'y/bar', :source => 'baz',
-      :team => 'qux',
+      :team => 'qux', :page => true
     }}
 
     it {
       should contain_class('monitoring_check::server_side::install')
       should contain_monitoring_check('server_side_placeholder_for_example1') \
                .with_command(/check_server_side.rb/) \
-               .with_sensu_custom({
+               .with_page(false) \
+               .with_sensu_custom(
                  'actual_command' => 'foo',
                  'actual_name'    => 'example1',
-                 'source'         => 'baz'
-               })
+                 'source'         => 'baz',
+                 'actual_page'    => true,
+                 'actual_ticket'  => false,
+                 'actual_notification_email' => 'undef',
+               )
     }
   end
 
   context 'with event_name' do
     let(:params) {{
       :command => 'foo', :runbook => 'y/bar', :source => 'baz',
-      :team => 'qux', :event_name => 'hello_world'
+      :team => 'qux', :event_name => 'hello_world', :ticket => true
     }}
 
     it {
       should contain_monitoring_check('server_side_placeholder_for_example1') \
-        .with_sensu_custom({
+        .with_ticket(false) \
+        .with_sensu_custom(
           'actual_command' => 'foo',
           'actual_name'    => 'hello_world',
-          'source'         => 'baz'
-        })
+          'source'         => 'baz',
+          'actual_page'    => false,
+          'actual_ticket'  => true,
+          'actual_notification_email' => 'undef'
+        )
     }
   end
 

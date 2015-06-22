@@ -43,8 +43,11 @@ class CheckServerSide < Sensu::Plugin::Check::CLI
       # execute its command and explicitly send the result of new check
       # to local redis-client process
       @new_check = { 'executed' => Time.now.to_i }.merge(check)
-      new_check['command'] = new_check.delete('actual_command')
-      new_check['name'] = new_check.delete('actual_name')
+
+      %w( command name page ticket notification_email ).each { |field|
+        new_check[field] = new_check.delete("actual_#{field}")
+      }
+
       new_check['output'] = `( #{new_check['command']} ) 2>&1`.strip
       new_check['status'] = $?.exitstatus
       new_check['issued'] = Time.now.to_i

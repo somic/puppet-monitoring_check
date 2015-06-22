@@ -70,9 +70,12 @@ define monitoring_check::server_side (
   include monitoring_check::server_side::install
 
   $custom_server_side = {
-    actual_command => $command,
-    actual_name    => pick($event_name, $title),
-    source         => $source,
+    actual_command            => $command,
+    actual_name               => pick($event_name, $title),
+    source                    => $source,
+    actual_page               => $page,
+    actual_ticket             => $ticket,
+    actual_notification_email => $notification_email,
   }
 
   $new_title = "server_side_placeholder_for_${title}"
@@ -88,10 +91,7 @@ define monitoring_check::server_side (
     alert_after           => $alert_after,
     realert_every         => $realert_every,
     team                  => $team,
-    page                  => $page,
     irc_channels          => $irc_channels,
-    notification_email    => $notification_email,
-    ticket                => $ticket,
     project               => $project,
     tip                   => $tip,
     sla                   => $sla,
