@@ -14,7 +14,6 @@
 #
 #
 define monitoring_check::cluster (
-    $cluster               = $::region,
     $check                 = $name,
     $command_add           = '',
     $runbook               = '-', # these are special: if '-', value will
@@ -33,6 +32,9 @@ define monitoring_check::cluster (
     $sensu_custom          = undef
 ) {
   require monitoring_check::check_cluster_install
+
+  require monitoring_check::params
+  $cluster = $monitoring_check::params::cluster_name
 
   monitoring_check { "${cluster}_${name}":
     command             => "/etc/sensu/plugins/check-cluster.rb  -N ${cluster} -c ${check} ${command_add}",

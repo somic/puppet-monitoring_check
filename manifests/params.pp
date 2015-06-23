@@ -23,6 +23,7 @@ class monitoring_check::params (
   # to validate the given inputs.
   $team_data = hiera('sensu_handlers::teams', {}),
   $bin_path = '/usr/bin',
+  $cluster_name = $::domain,
 ) {
 
   # Expose the team metadata as json for other tools to validate against
