@@ -43,6 +43,7 @@ define monitoring_check::server_side (
   $runbook,
   $source,
   $event_name            = undef,
+  $handlers              = ['default'],
   $needs_sudo            = false,
   $sudo_user             = 'root',
   $check_every           = '1m',
@@ -70,9 +71,10 @@ define monitoring_check::server_side (
   include monitoring_check::server_side::install
 
   $custom_server_side = {
-    actual_command => $command,
-    actual_name    => pick($event_name, $title),
-    source         => $source,
+    actual_command  => $command,
+    actual_name     => pick($event_name, $title),
+    actual_handlers => $handlers,
+    source          => $source,
   }
 
   $new_title = "server_side_placeholder_for_${title}"
@@ -81,6 +83,7 @@ define monitoring_check::server_side (
   monitoring_check { $new_title:
     command               => $new_command,
     runbook               => $runbook,
+    handlers              => [ ],
     needs_sudo            => $needs_sudo,
     sudo_user             => $sudo_user,
     check_every           => $check_every,

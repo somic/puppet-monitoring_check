@@ -45,6 +45,7 @@ class CheckServerSide < Sensu::Plugin::Check::CLI
       @new_check = { 'executed' => Time.now.to_i }.merge(check)
       new_check['command'] = new_check.delete('actual_command')
       new_check['name'] = new_check.delete('actual_name')
+      new_check['handlers'] = new_check.delete('actual_handlers')
       new_check['output'] = `( #{new_check['command']} ) 2>&1`.strip
       new_check['status'] = $?.exitstatus
       new_check['issued'] = Time.now.to_i
