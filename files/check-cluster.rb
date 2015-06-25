@@ -60,7 +60,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       status, output = check_aggregate(aggregator.summary(target_interval))
       logger.puts output
       send_payload EXIT_CODES[status], output
-      ok "Check executed successfully (#{status}: #{output})"
+      ok "Cluster check successfully executed, with output: (#{status}: #{output})"
       return
     end
 

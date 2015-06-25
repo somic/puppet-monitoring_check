@@ -36,8 +36,8 @@ define monitoring_check::cluster (
   require monitoring_check::params
   $cluster = $monitoring_check::params::cluster_name
 
-  monitoring_check { "${cluster}_${name}":
-    command             => "/etc/sensu/plugins/check-cluster.rb  -N ${cluster} -c ${check} ${command_add}",
+  monitoring_check { "${cluster}_${name}_initializer":
+    command             => "/etc/sensu/plugins/check-cluster.rb  --cluster-name ${cluster} --check ${check} ${command_add}",
     runbook             => $runbook,
     check_every         => $check_every,
     alert_after         => $alert_after,
