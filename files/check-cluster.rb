@@ -41,6 +41,12 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "Include silenced hosts in total",
     :default => false
 
+  option :dryrun,
+    :short => "-d",
+    :long => "--dry-run",
+    :description => "Run cluster check without any redis locking or sensu alerting",
+    :default => false
+
   def run
     unless check_sensu_version
       unknown "Sensu <0.13 is not supported"
@@ -55,6 +61,12 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
     interval = cluster_check[:interval]
     target_interval = cluster_check[:target_interval] || cluster_check[:interval]
+
+    if config[:dryrun]
+      status, output = check_aggregate(aggregator.summary(target_interval))
+      ok "Dry run cluster check successfully executed, with output: (#{status}: #{output})"
+      return
+    end
 
     locked_run(self, redis, lock_key, interval, Time.now.to_i, logger) do
       status, output = check_aggregate(aggregator.summary(target_interval))
