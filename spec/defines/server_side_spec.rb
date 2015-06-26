@@ -33,15 +33,16 @@ describe 'monitoring_check::server_side' do
                .with_sensu_custom({
                  'actual_command' => 'foo',
                  'actual_name'    => 'example1',
+                 'actual_handlers'=> [ 'default' ],
                  'source'         => 'baz'
                })
     }
   end
 
-  context 'with event_name' do
+  context 'with event_name and handlers' do
     let(:params) {{
       :command => 'foo', :runbook => 'y/bar', :source => 'baz',
-      :team => 'qux', :event_name => 'hello_world'
+      :team => 'qux', :event_name => 'hello_world', :handlers => [ 'foo' ]
     }}
 
     it {
@@ -49,6 +50,7 @@ describe 'monitoring_check::server_side' do
         .with_sensu_custom({
           'actual_command' => 'foo',
           'actual_name'    => 'hello_world',
+          'actual_handlers'=> [ 'foo' ],
           'source'         => 'baz'
         })
     }
