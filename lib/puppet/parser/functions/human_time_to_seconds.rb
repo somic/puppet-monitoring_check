@@ -13,11 +13,11 @@ ENDHEREDOC
       raise HumanTimeError, "#{arg.class}(#{arg.inspect}) does not respond to #to_s"
     end
 
-    unless arg.to_s =~ /^(\d+)([hms])?$/
-      raise HumanTimeError, "#{arg} is not of the form \\d+([hms])?"
+    unless arg.to_s =~ /^(\d+)([hmsdw])?$/
+      raise HumanTimeError, "#{arg} is not of the form \\d+([hmsdw])?"
     end
 
-    mult = {nil => 1, 's' => 1, 'm' => 60, 'h' => 3600}[$2]
+    mult = {nil => 1, 's' => 1, 'm' => 60, 'h' => 3600, 'd' => 86400, 'w' => 604800 }[$2]
     time = $1.to_i * mult
     time.to_s
   end
