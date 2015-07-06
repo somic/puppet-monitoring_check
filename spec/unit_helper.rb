@@ -16,5 +16,12 @@ module Sensu
         def self.method_missing(*args); end
       end
     end
+
+    module Utils
+      def ok(*args)
+        Sensu::Plugin::EXIT_CODES['OK']
+      end
+    end
+
   end
 end
