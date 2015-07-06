@@ -47,6 +47,12 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "Run cluster check without any redis locking or sensu alerting",
     :default => false
 
+  option :verbose,
+    :short => "-v",
+    :long => "--verbose",
+    :description => "Print debug information",
+    :default => false
+
   def run
     unless check_sensu_version
       unknown "Sensu <0.13 is not supported"
@@ -56,6 +62,10 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     if !cluster_check[:interval]
       critical "Please configure interval"
       return
+    end
+
+    if config[:verbose]
+      $VERBOSE = true
     end
 
     lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
@@ -247,7 +257,9 @@ class RedisCheckAggregate
   def summary(interval)
     # we only care about entries with executed timestamp
     all     = last_execution(find_servers).select{|_,data| data[0]}
+    puts "#{all.length} total host checks\n#{all}" if $VERBOSE
     active  = all.select { |_, data| data[0].to_i >= Time.now.to_i - interval }
+    puts "#{active.length} active host checks\n#{active}" if $VERBOSE
     { :total    => all.size,
       :ok       => active.count{ |_,data| data[1].to_i == 0 },
       :silenced => all.count do |server, time|
