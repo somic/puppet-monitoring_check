@@ -3,8 +3,10 @@
 $: << File.dirname(__FILE__)
 
 require 'rubygems'
-require 'sensu-plugin/utils'
-require 'sensu-plugin/check/cli'
+unless defined?(IN_RSPEC)
+  require 'sensu-plugin/utils'
+  require 'sensu-plugin/check/cli'
+end
 require 'tiny_redis'
 require 'socket'
 require 'json'
