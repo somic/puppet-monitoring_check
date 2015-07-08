@@ -64,9 +64,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       return
     end
 
-    if config[:verbose]
-      $VERBOSE = true
-    end
+    $VERBOSE = !!config[:verbose]
 
     lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
     interval = cluster_check[:interval]
@@ -257,9 +255,23 @@ class RedisCheckAggregate
   def summary(interval)
     # we only care about entries with executed timestamp
     all     = last_execution(find_servers).select{|_,data| data[0]}
-    puts "#{all.length} total host checks\n#{all}" if $VERBOSE
     active  = all.select { |_, data| data[0].to_i >= Time.now.to_i - interval }
-    puts "#{active.length} active host checks\n#{active}" if $VERBOSE
+
+    if $VERBOSE
+      puts "All #{all.length} hosts' latest result with timestamp for check #{@check}:\n#{all}\n\n"
+      puts "All #{active.length} hosts with #{@check} that have responded in the last #{interval} seconds:\n#{active}\n\n"
+    end
+
+    stale = all.keys - active.keys
+    failing = active.select{ |_,data| data[1].to_i == 2}
+
+    unless stale.empty?
+      puts "The results for the following #{stale.length} hosts are stale (occured more than #{interval} seconds ago):\n#{stale}\n\n"
+    end
+    unless failing.empty?
+      puts "The following #{failing.length} hosts are failing the check #{@check}:\n#{failing}\n\n"
+    end
+
     { :total    => all.size,
       :ok       => active.count{ |_,data| data[1].to_i == 0 },
       :silenced => all.count do |server, time|
