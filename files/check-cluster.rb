@@ -41,6 +41,18 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "Include silenced hosts in total",
     :default => false
 
+  option :dryrun,
+    :short => "-d",
+    :long => "--dry-run",
+    :description => "Run cluster check without any redis locking or sensu alerting",
+    :default => false
+
+  option :verbose,
+    :short => "-v",
+    :long => "--verbose",
+    :description => "Print debug information",
+    :default => false
+
   def run
     unless check_sensu_version
       unknown "Sensu <0.13 is not supported"
@@ -52,15 +64,23 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       return
     end
 
+    $VERBOSE = !!config[:verbose]
+
     lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
     interval = cluster_check[:interval]
     target_interval = cluster_check[:target_interval] || cluster_check[:interval]
+
+    if config[:dryrun]
+      status, output = check_aggregate(aggregator.summary(target_interval))
+      ok "Dry run cluster check successfully executed, with output: (#{status}: #{output})"
+      return
+    end
 
     locked_run(self, redis, lock_key, interval, Time.now.to_i, logger) do
       status, output = check_aggregate(aggregator.summary(target_interval))
       logger.puts output
       send_payload EXIT_CODES[status], output
-      ok "Check executed successfully (#{status}: #{output})"
+      ok "Cluster check successfully executed, with output: (#{status}: #{output})"
       return
     end
 
@@ -236,6 +256,22 @@ class RedisCheckAggregate
     # we only care about entries with executed timestamp
     all     = last_execution(find_servers).select{|_,data| data[0]}
     active  = all.select { |_, data| data[0].to_i >= Time.now.to_i - interval }
+
+    if $VERBOSE
+      puts "All #{all.length} hosts' latest result with timestamp for check #{@check}:\n#{all}\n\n"
+      puts "All #{active.length} hosts with #{@check} that have responded in the last #{interval} seconds:\n#{active}\n\n"
+    end
+
+    stale = all.keys - active.keys
+    failing = active.select{ |_,data| data[1].to_i == 2}
+
+    unless stale.empty?
+      puts "The results for the following #{stale.length} hosts are stale (occured more than #{interval} seconds ago):\n#{stale}\n\n"
+    end
+    unless failing.empty?
+      puts "The following #{failing.length} hosts are failing the check #{@check}:\n#{failing}\n\n"
+    end
+
     { :total    => all.size,
       :ok       => active.count{ |_,data| data[1].to_i == 0 },
       :silenced => all.count do |server, time|

@@ -58,7 +58,7 @@ describe CheckCluster do
   context "status" do
     context "should be OK" do
       it "when all is good" do
-        expect_status :ok, /Check executed successfully/
+        expect_status :ok, /Cluster check successfully executed/
         expect_payload :ok, /0%/
         check.run
       end
@@ -136,7 +136,7 @@ describe CheckCluster do
   # implementation details
   it "should run within a lock" do
     expect(redis).to receive(:setnx).and_return(1)
-    expect_status :ok, /Check executed successfully/
+    expect_status :ok, /Cluster check successfully executed/
     expect_payload :ok, /0%/
     check.run
   end
