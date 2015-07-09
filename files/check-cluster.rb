@@ -102,7 +102,7 @@ private
 
   def logger
     @logger ||= Logger.new($stdout).tap do |logger|
-      logger.log_formatter = proc {|_, _, _, msg| msg}
+      logger.formatter = proc {|_, _, _, msg| msg} if logger.respond_to? :formatter=
       logger.level = !!config[:verbose] ? Logger::DEBUG : Logger::INFO
     end
   end
