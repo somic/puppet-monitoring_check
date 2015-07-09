@@ -1,4 +1,7 @@
 #!/opt/sensu/embedded/bin/ruby
+
+$: << File.dirname(__FILE__)
+
 #
 # Check Cluster
 #
@@ -6,6 +9,7 @@
 require 'socket'
 require 'net/http'
 require 'logger'
+require 'tiny_redis'
 
 if !defined?(IN_RSPEC)
   require 'rubygems'
@@ -75,7 +79,8 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       return
     end
 
-    locked_run(self, redis, lock_key, interval, Time.now.to_i, logger) do
+    mutex ||= TinyRedis::Mutex.new(redis, lock_key, interval, logger)
+    mutex.run_with_lock_or_skip do
       status, output = check_aggregate(aggregator.summary(target_interval))
       logger.info output
       send_payload EXIT_CODES[status], output
@@ -83,7 +88,12 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       return
     end
 
-    unknown "Check didn't report status"
+    if (ttl = mutex.ttl) > 0
+      ok "Cluster check did not execute, lock expires in #{ttl}"
+      return
+    end
+
+    critical "Cluster check did not execute, lock problem?"
   rescue RuntimeError => e
     critical "#{e.message} (#{e.class}): #{e.backtrace.inspect}"
   end
@@ -108,14 +118,10 @@ private
 
   EXIT_CODES = Sensu::Plugin::EXIT_CODES
 
-  def locked_run(*args, &block)
-    RedisLocker.new(*args).run(&block)
-  end
-
   def redis
     @redis ||= begin
       redis_config = sensu_settings[:redis] or raise "Redis config not available"
-      TinyRedisClient.new(redis_config[:host], redis_config[:port])
+      TinyRedis::Client.new(redis_config[:host], redis_config[:port])
     end
   end
 
@@ -167,84 +173,6 @@ private
     @cluster_check ||=
       sensu_settings[:checks][:"#{config[:cluster_name]}_#{config[:check]}"] or
         raise "#{config[:cluster_name]}_#{config[:check]} not found"
-  end
-end
-
-class RedisLocker
-  attr_reader :status, :redis, :key, :interval, :now, :logger
-
-  def initialize(status, redis, key, interval, now, logger)
-    raise "Redis connection check failed" unless "hello" == redis.echo("hello")
-
-    @status   = status
-    @redis    = redis
-    @key      = key
-    @interval = interval.to_i
-    @now      = now
-    @logger   = logger
-  end
-
-  def run
-    expire if ENV['DEBUG_UNLOCK']
-
-    if redis.setnx(key, now) == 1
-      logger.info "Lock acquired"
-
-      begin
-        expire interval
-        yield
-      rescue => e
-        expire
-        status.critical "Releasing lock due to error: #{e} #{e.backtrace}"
-        raise e
-      end
-    elsif locked_at = redis.get(key).to_i
-      if (time_alive = now - locked_at) > interval
-        expire
-        status.ok "Lock problem: #{now} - #{locked_at} > #{interval}, expired immediately"
-      else
-        status.ok "Lock expires in #{interval - time_alive} seconds"
-      end
-    else
-      status.ok "Lock slipped away"
-    end
-  end
-
-private
-
-  def expire(seconds=0)
-    redis.pexpire(@key, seconds*1000)
-  end
-end
-
-class TinyRedisClient
-  RN = "\r\n"
-
-  def initialize(host='localhost', port=6379)
-    @socket = TCPSocket.new(host, port)
-  end
-
-  def method_missing(method, *args)
-    args.unshift method
-    data = ["*#{args.size}", *args.map {|arg| "$#{arg.to_s.size}#{RN}#{arg}"}]
-    @socket.write(data.join(RN) << RN)
-    parse_response
-  end
-
-  def parse_response
-    case @socket.gets
-    when /^\+(.*)\r\n$/ then $1
-    when /^:(\d+)\r\n$/ then $1.to_i
-    when /^-(.*)\r\n$/  then raise "Redis error: #{$1}"
-    when /^\$([-\d]+)\r\n$/
-      $1.to_i >= 0 ? @socket.read($1.to_i+2)[0..-3] : nil
-    when /^\*([-\d]+)\r\n$/
-      $1.to_i > 0 ? (1..$1.to_i).inject([]) { |a,_| a << parse_response } : nil
-    end
-  end
-
-  def close
-    @socket.close
   end
 end
 

@@ -65,21 +65,15 @@ describe CheckCluster do
 
       it "when check locked" do
         redis.stub(:setnx).and_return 0
-        expect_status :ok, /Lock expires in/
-        check.run
-      end
-
-      it "when lock problem" do
-        redis.stub(:setnx).and_return 0
-        redis.stub(:get).and_return nil
-        expect_status :ok, /problem/
+        redis.stub(:ttl).and_return 10
+        expect_status :ok, /expires in 10/
         check.run
       end
 
       it "when lock expired" do
         redis.stub(:setnx).and_return 0
-        redis.stub(:get).and_return 0
-        expect_status :ok, /expired/
+        redis.stub(:ttl).and_return 0
+        expect_status :critical, /problem/
         check.run
       end
     end
@@ -93,12 +87,6 @@ describe CheckCluster do
     end
 
     context "should be UNKNOWN" do
-      it "when no status was reported" do
-        expect_status :unknown, "Check didn't report status"
-        check.stub(:locked_run).and_return nil
-        check.run
-      end
-
       it "when wrong version of sensu" do
         stub_const("Sensu::VERSION", "0.12")
         expect_status :unknown, "Sensu <0.13 is not supported"
