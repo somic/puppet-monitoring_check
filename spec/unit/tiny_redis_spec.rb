@@ -23,6 +23,18 @@ describe TinyRedis::Mutex do
 
   before(:each) { setup_mocks }
 
+  describe '#ttl' do
+    it 'is nil when no expiration' do
+      redis.stub(:pttl => nil)
+      expect(locker.ttl).to be_nil
+    end
+
+    it 'returns amount in seconds' do
+      redis.stub(:pttl => 1234)
+      expect(locker.ttl).to eq(1.234)
+    end
+  end
+
   context "when lock can be acquired" do
     it "should run_with_lock_or_skip the block" do
       expect { |b| locker.run_with_lock_or_skip(&b) }.to yield_control

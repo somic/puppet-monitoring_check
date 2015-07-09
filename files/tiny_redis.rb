@@ -41,7 +41,9 @@ module TinyRedis
     end
 
     def ttl
-      redis.pttl(key) / 1000.0
+      if ttl = redis.pttl(key)
+        ttl / 1000.0
+      end
     end
 
     private
