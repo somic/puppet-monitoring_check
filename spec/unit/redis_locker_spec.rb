@@ -8,7 +8,7 @@ describe RedisLocker do
   let(:locked)   { now - interval / 2 }
   let(:expired)  { now - interval - 1 }
 
-  let(:log)    { StringIO.new("") }
+  let(:log)    { Logger.new(StringIO.new("")) }
   let(:key)    { "key" }
   let(:status) { double(:status) }
   let(:redis)  { double(:redis) }

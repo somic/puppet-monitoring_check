@@ -5,6 +5,7 @@
 
 require 'socket'
 require 'net/http'
+require 'logger'
 
 if !defined?(IN_RSPEC)
   require 'rubygems'
@@ -64,8 +65,6 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       return
     end
 
-    $VERBOSE = !!config[:verbose]
-
     lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
     interval = cluster_check[:interval]
     target_interval = cluster_check[:target_interval] || cluster_check[:interval]
@@ -78,7 +77,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
 
     locked_run(self, redis, lock_key, interval, Time.now.to_i, logger) do
       status, output = check_aggregate(aggregator.summary(target_interval))
-      logger.puts output
+      logger.info output
       send_payload EXIT_CODES[status], output
       ok "Cluster check successfully executed, with output: (#{status}: #{output})"
       return
@@ -91,8 +90,15 @@ class CheckCluster < Sensu::Plugin::Check::CLI
 
 private
 
+  def logger
+    @logger ||= Logger.new($stdout).tap do |logger|
+      logger.log_formatter = proc {|_, _, _, msg| msg}
+      logger.level = !!config[:verbose] ? Logger::DEBUG : Logger::INFO
+    end
+  end
+
   def aggregator
-    RedisCheckAggregate.new(redis, config[:check])
+    RedisCheckAggregate.new(redis, config[:check], logger)
   end
 
   def check_sensu_version
@@ -101,10 +107,6 @@ private
   end
 
   EXIT_CODES = Sensu::Plugin::EXIT_CODES
-
-  def logger
-    $stdout
-  end
 
   def locked_run(*args, &block)
     RedisLocker.new(*args).run(&block)
@@ -171,7 +173,7 @@ end
 class RedisLocker
   attr_reader :status, :redis, :key, :interval, :now, :logger
 
-  def initialize(status, redis, key, interval, now = Time.now.to_i, logger = $stdout)
+  def initialize(status, redis, key, interval, now, logger)
     raise "Redis connection check failed" unless "hello" == redis.echo("hello")
 
     @status   = status
@@ -186,7 +188,7 @@ class RedisLocker
     expire if ENV['DEBUG_UNLOCK']
 
     if redis.setnx(key, now) == 1
-      logger.puts "Lock acquired"
+      logger.info "Lock acquired"
 
       begin
         expire interval
@@ -247,9 +249,12 @@ class TinyRedisClient
 end
 
 class RedisCheckAggregate
-  def initialize(redis, check)
-    @check = check
-    @redis = redis
+  attr_accessor :logger
+
+  def initialize(redis, check, logger)
+    @check  = check
+    @redis  = redis
+    @logger = logger
   end
 
   def summary(interval)
@@ -257,19 +262,18 @@ class RedisCheckAggregate
     all     = last_execution(find_servers).select{|_,data| data[0]}
     active  = all.select { |_, data| data[0].to_i >= Time.now.to_i - interval }
 
-    if $VERBOSE
-      puts "All #{all.length} hosts' latest result with timestamp for check #{@check}:\n#{all}\n\n"
-      puts "All #{active.length} hosts with #{@check} that have responded in the last #{interval} seconds:\n#{active}\n\n"
-    end
+    logger.debug "All #{all.length} hosts' latest result with timestamp for check #@check:\n#{all}\n\n"
+    logger.debug "All #{active.length} hosts with #@check that have responded in the last #{interval} seconds:\n#{active}\n\n"
 
     stale = all.keys - active.keys
     failing = active.select{ |_,data| data[1].to_i == 2}
 
     unless stale.empty?
-      puts "The results for the following #{stale.length} hosts are stale (occured more than #{interval} seconds ago):\n#{stale}\n\n"
+      logger.info "The results for the following #{stale.length} hosts are stale (occured more than #{interval} seconds ago):\n#{stale}\n\n"
     end
+
     unless failing.empty?
-      puts "The following #{failing.length} hosts are failing the check #{@check}:\n#{failing}\n\n"
+      logger.info "The following #{failing.length} hosts are failing the check #{@check}:\n#{failing}\n\n"
     end
 
     { :total    => all.size,

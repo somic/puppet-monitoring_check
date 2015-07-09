@@ -26,7 +26,7 @@ describe CheckCluster do
     end
   end
 
-  let(:logger) { StringIO.new("") }
+  let(:logger) { Logger.new(StringIO.new("")) }
 
   let(:aggregator) do
     double(:aggregator).tap do |agg|
