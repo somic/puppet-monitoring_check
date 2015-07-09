@@ -63,17 +63,17 @@ describe CheckCluster do
         check.run
       end
 
-      it "when check locked" do
+      it "when lock was not acquired" do
         redis.stub(:setnx).and_return 0
-        redis.stub(:ttl).and_return 10
+        redis.stub(:pttl).and_return 10000.0
         expect_status :ok, /expires in 10/
         check.run
       end
 
       it "when lock expired" do
         redis.stub(:setnx).and_return 0
-        redis.stub(:ttl).and_return 0
-        expect_status :critical, /problem/
+        redis.stub(:pttl).and_return 0.0
+        expect_status :critical, /did not execute/
         check.run
       end
     end
