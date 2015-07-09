@@ -88,7 +88,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       return
     end
 
-    if (ttl = mutex.ttl) && ttl > 0
+    if (ttl = mutex.ttl) && ttl >= 0
       ok "Cluster check did not execute, lock expires in #{ttl}"
       return
     end
