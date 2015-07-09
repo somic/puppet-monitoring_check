@@ -79,7 +79,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       return
     end
 
-    mutex ||= TinyRedis::Mutex.new(redis, lock_key, interval, logger)
+    mutex = TinyRedis::Mutex.new(redis, lock_key, interval, logger)
     mutex.run_with_lock_or_skip do
       status, output = check_aggregate(aggregator.summary(target_interval))
       logger.info output
