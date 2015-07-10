@@ -73,7 +73,7 @@ describe CheckCluster do
       it "when lock expired" do
         redis.stub(:setnx).and_return 0
         redis.stub(:pttl).and_return 0.0
-        expect_status :critical, /did not execute/
+        expect_status :ok, /did not execute/
         check.run
       end
     end
