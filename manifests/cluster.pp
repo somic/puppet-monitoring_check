@@ -10,6 +10,10 @@
 # [*command_add*]
 # Additional command arguments
 #
+# [*staleness_interval*]
+# The cluster check will only count individual check status's of 'OK' if they
+# occured within the last staleness_interval. Defaults to 12 hours
+#
 # For rest see @monitoring_check.
 #
 #
@@ -18,6 +22,7 @@ define monitoring_check::cluster (
     $command_add           = '',
     $runbook               = '-', # these are special: if '-', value will
     $tip                   = '-', # be taken from target check
+    $staleness_interval    = '12h',
     $check_every           = undef,
     $alert_after           = undef,
     $realert_every         = undef,
@@ -36,6 +41,13 @@ define monitoring_check::cluster (
   require monitoring_check::params
   $cluster = $monitoring_check::params::cluster_name
 
+  $staleness_interval_s = human_time_to_seconds($staleness_interval)
+  validate_re($staleness_interval_s, '^\d+$')
+
+  $custom_cluster_params = {
+    staleness_interval  => $staleness_interval_s,
+  }
+
   monitoring_check { "${cluster}_${name}":
     command             => "/etc/sensu/plugins/check-cluster.rb  --cluster-name ${cluster} --check ${check} ${command_add}",
     runbook             => $runbook,
@@ -51,6 +63,6 @@ define monitoring_check::cluster (
     page                => $page,
     team                => $team,
     dependencies        => $dependencies,
-    sensu_custom        => $sensu_custom
+    sensu_custom        => merge($sensu_custom, $custom_cluster_params),
   }
 }
