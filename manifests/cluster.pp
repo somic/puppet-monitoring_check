@@ -18,11 +18,11 @@
 #
 #
 define monitoring_check::cluster (
+    $runbook,
     $check                 = $name,
     $command_add           = '',
-    $runbook               = '-', # these are special: if '-', value will
-    $tip                   = '-', # be taken from target check
     $staleness_interval    = '12h',
+    $tip                   = undef,
     $check_every           = undef,
     $alert_after           = undef,
     $realert_every         = undef,
