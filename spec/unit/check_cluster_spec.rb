@@ -76,6 +76,13 @@ describe CheckCluster do
         expect_status :ok, /did not execute/
         check.run
       end
+
+      it "when lock expired before " do
+        redis.stub(:setnx).and_return 0
+        redis.stub(:pttl).and_return nil
+        expect_status :ok, /did not execute/
+        check.run
+      end
     end
 
     context "should be CRITICAL" do

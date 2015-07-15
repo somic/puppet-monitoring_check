@@ -93,6 +93,11 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       return
     end
 
+    if ttl.nil?
+      ok "Cluster check did not execute, lock expired sooner than round-trip time to redis server"
+      return
+    end
+
     critical "Cluster check did not execute, ttl: #{ttl.inspect}"
   rescue RuntimeError => e
     critical "#{e.message} (#{e.class}): #{e.backtrace.inspect}"
