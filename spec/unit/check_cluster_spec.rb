@@ -13,7 +13,7 @@ describe CheckCluster do
     { :checks => {
         :test_cluster_test_check => {
           :interval => 300,
-          :target_interval => 300 } } }
+          :staleness_interval => '12h' } } }
   end
 
   let(:redis)  do

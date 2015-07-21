@@ -71,17 +71,17 @@ class CheckCluster < Sensu::Plugin::Check::CLI
 
     lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
     interval = cluster_check[:interval]
-    target_interval = cluster_check[:target_interval] || cluster_check[:interval]
+    staleness_interval = cluster_check[:staleness_interval] || cluster_check[:interval]
 
     if config[:dryrun]
-      status, output = check_aggregate(aggregator.summary(target_interval))
+      status, output = check_aggregate(aggregator.summary(staleness_interval))
       ok "Dry run cluster check successfully executed, with output: (#{status}: #{output})"
       return
     end
 
     mutex = TinyRedis::Mutex.new(redis, lock_key, interval, logger)
     mutex.run_with_lock_or_skip do
-      status, output = check_aggregate(aggregator.summary(target_interval))
+      status, output = check_aggregate(aggregator.summary(staleness_interval))
       logger.info output
       send_payload EXIT_CODES[status], output
       ok "Cluster check successfully executed, with output: (#{status}: #{output})"
