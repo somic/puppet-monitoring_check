@@ -18,7 +18,10 @@ describe 'monitoring_check::server_side' do
     :habitat       => 'somehabitat',
   }}
 
-  let(:pre_condition) { 'include sensu' }
+  let(:pre_condition) { %q{
+    include apt
+    include sensu
+  } }
 
   context 'by default' do
     let(:params) {{
