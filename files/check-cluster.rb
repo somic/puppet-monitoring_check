@@ -113,7 +113,7 @@ private
   end
 
   def aggregator
-    RedisCheckAggregate.new(redis, config[:check], logger)
+    RedisCheckAggregate.new(redis, config[:check], logger, config[:cluster_name])
   end
 
   def check_sensu_version
@@ -184,10 +184,11 @@ end
 class RedisCheckAggregate
   attr_accessor :logger
 
-  def initialize(redis, check, logger)
+  def initialize(redis, check, logger, cluster_name)
     @check  = check
     @redis  = redis
     @logger = logger
+    @cluster_name = cluster_name
   end
 
   def summary(interval)
@@ -231,5 +232,6 @@ class RedisCheckAggregate
   def find_servers
     # TODO: reimplement using @redis.scan for webscale
     @servers ||= @redis.keys("result:*:#@check").map {|key| key.split(':')[1]}
+    @servers.reject {|s| s == @cluster_name }
   end
 end
