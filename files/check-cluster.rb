@@ -113,7 +113,7 @@ private
   end
 
   def aggregator
-    RedisCheckAggregate.new(redis, config[:check], logger)
+    RedisCheckAggregate.new(redis, config[:check], logger, config[:cluster_name])
   end
 
   def check_sensu_version
@@ -184,10 +184,11 @@ end
 class RedisCheckAggregate
   attr_accessor :logger
 
-  def initialize(redis, check, logger)
+  def initialize(redis, check, logger, cluster_name)
     @check  = check
     @redis  = redis
     @logger = logger
+    @cluster_name = cluster_name
   end
 
   def summary(interval)
@@ -233,7 +234,7 @@ class RedisCheckAggregate
     @servers ||= begin
       keys = @redis.keys("result:*:#@check")
       raise "No servers found for #@check" if !keys || keys.empty?
-      keys.map {|key| key.split(':')[1]}
+      keys.map {|key| key.split(':')[1] }.reject {|s| s == @cluster_name }
     end
   end
 end
