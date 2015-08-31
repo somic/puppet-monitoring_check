@@ -30,7 +30,7 @@ describe CheckCluster do
 
   let(:aggregator) do
     double(:aggregator).tap do |agg|
-      agg.stub(:summary).and_return({:total => 1, :ok => 1, :silenced => 0})
+      agg.stub(:summary).and_return({:total => 1, :ok => 1, :silenced => 0, :failing => [], :stale => []})
     end
   end
 
@@ -111,7 +111,7 @@ describe CheckCluster do
       end
 
       it "when reached warning threshold" do
-        check.send(:check_aggregate, :ok => 60, :total => 100, :silenced => 0) do |status, message|
+        check.send(:check_aggregate, :ok => 60, :total => 100, :silenced => 0, :failing => ["somehosti.hostname.com", "anotherhost.example.com"], :stale => []) do |status, message|
           expect(status).to be(1)
           expect(message).to match(/40%/)
         end
@@ -120,7 +120,7 @@ describe CheckCluster do
 
     context "should be CRITICAL" do
       it "when reached critical threshold" do
-        check.send(:check_aggregate, :ok => 40, :total => 100, :silenced => 0) do |status, message|
+        check.send(:check_aggregate, :ok => 40, :total => 100, :silenced => 0, :failing => ["somehosti.hostname.com", "anotherhost.example.com"], :stale => []) do |status, message|
           expect(status).to be(2)
           expect(message).to match(/60%/)
         end

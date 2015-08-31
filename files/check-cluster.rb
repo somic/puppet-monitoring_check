@@ -57,7 +57,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :long => "--verbose",
     :description => "Print debug information",
     :default => false
-
+  
   def run
     unless check_sensu_version
       unknown "Sensu <0.13 is not supported"
@@ -75,7 +75,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
 
     if config[:dryrun]
       status, output = check_aggregate(aggregator.summary(staleness_interval))
-      ok "Dry run cluster check successfully executed, with output: (#{status}: #{output})"
+      ok "Dry run cluster check successfully executed, with output: #{status}: #{output}"
       return
     end
 
@@ -84,7 +84,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       status, output = check_aggregate(aggregator.summary(staleness_interval))
       logger.info output
       send_payload EXIT_CODES[status], output
-      ok "Cluster check successfully executed, with output: (#{status}: #{output})"
+      ok "Cluster check successfully executed, with output: #{status}: #{output}"
       return
     end
 
@@ -136,7 +136,8 @@ private
   #   silenced: number of *total* servers that are silenced or have
   #             target check silenced
   def check_aggregate(summary)
-    total, ok, silenced = summary.values_at(:total, :ok, :silenced)
+    #puts "summary is #{summary}"
+    total, ok, silenced, stale, failing = summary.values_at(:total, :ok, :silenced, :stale, :failing)
     return 'OK', 'No servers running the check' if total.zero?
 
     eff_total = total - silenced * (config[:silenced] ? 1 : 0)
@@ -144,9 +145,12 @@ private
 
     ok_pct  = (100 * ok / eff_total.to_f).to_i
 
+    # Loop through the arrays and split the hostname so we get a short hostname 
     message = "#{ok} OK out of #{eff_total} total."
     message << " #{silenced} silenced." if config[:silenced] && silenced > 0
-    message << " (#{ok_pct}% OK, #{config[:critical]}% threshold)"
+    message << " #{ok_pct}% OK, #{config[:critical]}% threshold"
+    message << "\nStale hosts: #{stale.map{|host| host.split('.').first}.sort[0..10].join ','}" unless stale.empty?
+    message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" if stale.empty?
 
     state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
     return state, message
@@ -210,7 +214,9 @@ class RedisCheckAggregate
       logger.info "The following #{failing.length} hosts are failing the check #{@check}:\n#{failing}\n\n"
     end
 
-    { :total    => all.size,
+    { :stale    => stale,
+      :failing  => failing,
+      :total    => all.size,
       :ok       => active.count{ |_,data| data[1].to_i == 0 },
       :silenced => all.count do |server, time|
         [server, @check, "#{server}/#@check"].map{|s| "stash:silence/#{s}"}.
