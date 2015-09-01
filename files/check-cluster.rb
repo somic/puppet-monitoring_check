@@ -150,7 +150,7 @@ private
     message << " #{silenced} silenced." if config[:silenced] && silenced > 0
     message << " #{ok_pct}% OK, #{config[:critical]}% threshold"
     message << "\nStale hosts: #{stale.map{|host| host.split('.').first}.sort[0..10].join ','}" unless stale.empty?
-    message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" if stale.empty?
+    message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" unless failing.empty?
 
     state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
     return state, message
@@ -204,7 +204,7 @@ class RedisCheckAggregate
     logger.debug "All #{active.length} hosts with #@check that have responded in the last #{interval} seconds:\n#{active}\n\n"
 
     stale = all.keys - active.keys
-    failing = active.select{ |_,data| data[1].to_i == 2}
+    failing = active.select{ |_,data| data[1].to_i == 2}.to_a.map(&:first)
 
     unless stale.empty?
       logger.info "The results for the following #{stale.length} hosts are stale (occured more than #{interval} seconds ago):\n#{stale}\n\n"
