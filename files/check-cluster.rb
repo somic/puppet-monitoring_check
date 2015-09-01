@@ -150,7 +150,7 @@ private
     message << " #{silenced} silenced." if config[:silenced] && silenced > 0
     message << " #{ok_pct}% OK, #{config[:critical]}% threshold"
     message << "\nStale hosts: #{stale.map{|host| host.split('.').first}.sort[0..10].join ','}" unless stale.empty?
-    message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" if stale.empty?
+    message << "\nFailing hosts: #{failing.map{|host| host[0].split('.').first}.sort[0..10].join ','}" unless failing.empty?
 
     state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
     return state, message
