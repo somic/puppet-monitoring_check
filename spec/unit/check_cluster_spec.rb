@@ -6,7 +6,8 @@ describe CheckCluster do
     { :check        => :test_check,
       :cluster_name => :test_cluster,
       :warning      => 30,
-      :critical     => 50 }
+      :critical     => 50,
+      :min_nodes    => 0 }
   end
 
   let(:sensu_settings) do
