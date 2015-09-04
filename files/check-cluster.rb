@@ -31,7 +31,8 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :short => "-m MIN",
     :long => "--minimum-nodes MIN",
     :description => "The minimum number of nodes that should be available",
-    :proc => proc {|a| a.to_i }
+    :proc => proc {|a| a.to_i },
+    :default => 0
 
   option :check,
     :short => "-c CHECK",
@@ -157,15 +158,11 @@ private
     message << " #{ok_pct}% OK, #{config[:critical]}% threshold"
     message << "\nStale hosts: #{stale.map{|host| host.split('.').first}.sort[0..10].join ','}" unless stale.empty?
     message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" unless failing.empty?
+    message << "\nMinimum number of hosts required is #{config[:min_nodes]} and only #{ok} found" if ok < config[:min_nodes]
 
-    if config[:min_nodes] <= 0
-      state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
-      return state, message
-    else
-      message << "\nMinimum number of hosts required in cluster is #{config[:min_nodes]} and only #{ok} found"
-      state = ok >= config[:min_nodes] ? 'OK' : 'CRITICAL'
-      return state, message
-    end
+    state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
+    state = ok >= config[:min_nodes] ? 'OK' : 'CRITICAL'
+    return state, message
   end
 
   def sensu_settings
