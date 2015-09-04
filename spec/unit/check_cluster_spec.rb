@@ -127,6 +127,16 @@ describe CheckCluster do
         end
       end
     end
+
+    context "should be CRITICAL" do
+      let(:config) { super().merge(:min_nodes => 10) }
+      it "when minimum nodes not met" do
+        check.send(:check_aggregate, :ok => 5, :total => 5, :silenced => 0, :failing => [], :stale => []) do |status, message|
+          expect(status).to be(2)
+          expect(message).to match(/minimum/)
+        end
+      end
+    end
   end
 
   # implementation details
