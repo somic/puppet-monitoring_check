@@ -124,6 +124,10 @@
 # Should not be tied to a host that generated
 # this event because it can come from any host where this check is deployed.
 #
+# [*tags*]
+# An array of arbitrary tags that can be used in handlers for different metadata needs
+# such as labels in JIRA handlers. This is optional and is empty by default
+#
 # This, by default allows you to set the $::override_sensu_checks_to fact
 # in /etc/facter/facts.d to stop checks on a single machine from alerting via the
 # normal mechanism. Setting this to false will stop this mechanism from applying
@@ -154,6 +158,7 @@ define monitoring_check (
   $high_flap_threshold   = undef,
   $source                = undef,
   $can_override          = true,
+  $tags                  = [],
 ) {
 
   include monitoring_check::params
@@ -220,18 +225,19 @@ define monitoring_check (
 
 
   $base_dict = {
-    alert_after           => $alert_after_s,
-    realert_every         => $realert_every,
-    runbook               => $runbook,
-    sla                   => $sla,
-    team                  => $team,
-    irc_channels          => $irc_channel_array,
-    notification_email    => $notification_email,
-    ticket                => $ticket,
-    project               => $project,
-    page                  => str2bool($page),
-    tip                   => $tip,
-    habitat               => $::habitat,
+    alert_after        => $alert_after_s,
+    realert_every      => $realert_every,
+    runbook            => $runbook,
+    sla                => $sla,
+    team               => $team,
+    irc_channels       => $irc_channel_array,
+    notification_email => $notification_email,
+    ticket             => $ticket,
+    project            => $project,
+    page               => str2bool($page),
+    tip                => $tip,
+    habitat            => $::habitat,
+    tags               => $tags,
   }
   if $source != undef {
     $base_with_source = merge($base_dict, {
