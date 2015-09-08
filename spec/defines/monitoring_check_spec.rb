@@ -51,6 +51,7 @@ describe 'monitoring_check' do
             "page"               => true,
             "tip"                => false,
             "habitat"            => "somehabitat",
+            "tags"               => [],
           })
       end
       it { should contain_file('/etc/sensu/team_data.json').with_content(/other/) }
@@ -86,6 +87,7 @@ describe 'monitoring_check' do
         "team"               => "other",
         "notification_email" => "undef",
         "habitat"            => "somehabitat",
+        "tags"               => [],
       })
       }
     end
@@ -117,6 +119,7 @@ describe 'monitoring_check' do
           "team"               => "operations",
           "notification_email" => "undef",
           "habitat"            => "somehabitat",
+          "tags"               => [],
         }
       )}
     end
@@ -136,6 +139,7 @@ describe 'monitoring_check' do
         "team"               => "overridden",
         "notification_email" => "undef",
         "habitat"            => "somehabitat",
+        "tags"               => [],
         }
       )}
     end
@@ -155,6 +159,7 @@ describe 'monitoring_check' do
           "team"               => "operations",
           "notification_email" => "undef",
           "habitat"            => "somehabitat",
+          "tags"               => [],
         }
       )}
     end
@@ -174,6 +179,7 @@ describe 'monitoring_check' do
           "team"               => "operations",
           "notification_email" => "undef",
           "habitat"            => "somehabitat",
+          "tags"               => [],
         }
       )}
     end
@@ -223,6 +229,7 @@ describe 'monitoring_check' do
         "team"               => "noop",
         "notification_email" => "custom@override",
         "habitat"            => "somehabitat",
+        "tags"               => [],
         }
       )}
     end
@@ -242,6 +249,7 @@ describe 'monitoring_check' do
         "team"               => "operations",
         "notification_email" => "undef",
         "habitat"            => "somehabitat",
+        "tags"               => [],
         }
       )}
     end
@@ -261,7 +269,28 @@ describe 'monitoring_check' do
         "team"               => "operations",
         "notification_email" => "undef",
         "habitat"            => "somehabitat",
-        "source"           => "mysource"
+        "source"             => "mysource",
+        "tags"               => [],
+        }
+      )}
+    end
+    context "with tags" do
+      let(:facts) { { :habitat => "somehabitat", :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
+      let(:params) { {:command => 'bar', :runbook => 'http://gronk', :tags => ['first_tag', 'second_tag'] } }
+      it { should contain_sensu__check('examplecheck').with_custom({
+        "runbook"            => "http://gronk",
+        "ticket"             => false,
+        "irc_channels"       => :undef,
+        "tip"                => false,
+        "project"            => false,
+        "alert_after"        => "0",
+        "page"               => false,
+        "realert_every"      => "-1",
+        "sla"                => "No SLA defined.",
+        "team"               => "operations",
+        "notification_email" => "undef",
+        "habitat"            => "somehabitat",
+        "tags"               => ['first_tag','second_tag'],
         }
       )}
     end
