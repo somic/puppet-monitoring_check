@@ -74,7 +74,6 @@ define monitoring_check::server_side (
     actual_command  => $command,
     actual_name     => pick($event_name, $title),
     actual_handlers => $handlers,
-    source          => $source,
   }
 
   $new_title = "server_side_placeholder_for_${title}"
@@ -104,6 +103,7 @@ define monitoring_check::server_side (
     low_flap_threshold    => $low_flap_threshold,
     high_flap_threshold   => $high_flap_threshold,
     can_override          => $can_override,
+    source                => $source,
   }
 
 }
