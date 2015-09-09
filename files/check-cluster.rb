@@ -161,7 +161,7 @@ private
     message << "\nMinimum number of hosts required is #{config[:min_nodes]} and only #{ok} found" if ok < config[:min_nodes]
 
     state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
-    state = ok >= config[:min_nodes] ? 'OK' : 'CRITICAL'
+    state = ok >= config[:min_nodes] ? state : 'CRITICAL'
     return state, message
   end
 
