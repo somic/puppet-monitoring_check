@@ -27,18 +27,25 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "Name of the cluster to use in the source of the alerts",
     :required => true
 
+  option :min_nodes,
+    :short => "-m MIN",
+    :long => "--minimum-nodes MIN",
+    :description => "The minimum number of nodes that should be available",
+    :proc => proc {|a| a.to_i },
+    :default => 0
+
   option :check,
     :short => "-c CHECK",
     :long => "--check CHECK",
     :description => "Aggregate CHECK name",
-    :required => true,
-    :default => 80
+    :required => true
 
   option :critical,
     :short => "-C PERCENT",
     :long => "--critical PERCENT",
     :description => "PERCENT non-ok before critical",
-    :proc => proc {|a| a.to_i }
+    :proc => proc {|a| a.to_i },
+    :default => 80
 
   option :silenced,
     :short => "-S yes",
@@ -151,8 +158,10 @@ private
     message << " #{ok_pct}% OK, #{config[:critical]}% threshold"
     message << "\nStale hosts: #{stale.map{|host| host.split('.').first}.sort[0..10].join ','}" unless stale.empty?
     message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" unless failing.empty?
+    message << "\nMinimum number of hosts required is #{config[:min_nodes]} and only #{ok} found" if ok < config[:min_nodes]
 
     state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
+    state = ok >= config[:min_nodes] ? state : 'CRITICAL'
     return state, message
   end
 

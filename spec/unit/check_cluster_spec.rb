@@ -6,7 +6,8 @@ describe CheckCluster do
     { :check        => :test_check,
       :cluster_name => :test_cluster,
       :warning      => 30,
-      :critical     => 50 }
+      :critical     => 50,
+      :min_nodes    => 0 }
   end
 
   let(:sensu_settings) do
@@ -123,6 +124,16 @@ describe CheckCluster do
         check.send(:check_aggregate, :ok => 40, :total => 100, :silenced => 0, :failing => ["somehosti.hostname.com", "anotherhost.example.com"], :stale => []) do |status, message|
           expect(status).to be(2)
           expect(message).to match(/60%/)
+        end
+      end
+    end
+
+    context "should be CRITICAL" do
+      let(:config) { super().merge(:min_nodes => 10) }
+      it "when minimum nodes not met" do
+        check.send(:check_aggregate, :ok => 5, :total => 5, :silenced => 0, :failing => [], :stale => []) do |status, message|
+          expect(status).to be(2)
+          expect(message).to match(/minimum/)
         end
       end
     end
