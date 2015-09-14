@@ -239,20 +239,13 @@ define monitoring_check (
     habitat            => $::habitat,
     tags               => $tags,
   }
-  if $source != undef {
-    $base_with_source = merge($base_dict, {
-      source => $source
-    })
-  } else {
-    $base_with_source = $base_dict
-  }
   if getvar('::override_sensu_checks_to') and $can_override {
-    $with_override = merge($base_with_source, {
+    $with_override = merge($base_dict, {
       'team'             => 'noop',
       notification_email => $::override_sensu_checks_to,
     })
   } else {
-    $with_override = $base_with_source
+    $with_override = $base_dict
   }
   $custom = merge($with_override, $sensu_custom)
 
@@ -266,6 +259,7 @@ define monitoring_check (
       high_flap_threshold => $low_flap_threshold,
       dependencies        => any2array($dependencies),
       custom              => $custom,
+      source              => $source,
     }
   }
 }

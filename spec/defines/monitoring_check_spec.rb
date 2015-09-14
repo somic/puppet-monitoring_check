@@ -269,10 +269,9 @@ describe 'monitoring_check' do
         "team"               => "operations",
         "notification_email" => "undef",
         "habitat"            => "somehabitat",
-        "source"             => "mysource",
         "tags"               => [],
         }
-      )}
+      ).with_source('mysource') }
     end
     context "with tags" do
       let(:facts) { { :habitat => "somehabitat", :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
