@@ -5,9 +5,9 @@ class monitoring_check::server_side::install (
 ) {
   include monitoring_check::tiny_redis_install
 
-  file { '/etc/sensu/plugins/check_server_side.rb':
-    owner  => 'sensu',
-    group  => 'sensu',
+  file { "${monitoring_check::params::etc_dir}/plugins/check_server_side.rb":
+    owner  => $monitoring_check::params::user,
+    group  => $monitoring_check::params::group,
     mode   => '0555',
     source => 'puppet:///modules/monitoring_check/check_server_side.rb',
   }

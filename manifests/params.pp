@@ -26,6 +26,23 @@ class monitoring_check::params (
   $cluster_name = $::domain,
 ) {
 
+  case $::osfamily {
+    'windows': {
+      $etc_dir = 'C:/opt/sensu'
+      $user = undef
+      $group = undef
+      $dir_mode = undef
+      $file_mode = undef
+    }
+    default: {
+      $etc_dir = '/etc/sensu'
+      $user = 'sensu'
+      $group = 'sensu'
+      $dir_mode = '0555'
+      $file_mode = '0444'
+    }
+  }
+
   # Expose the team metadata as json for other tools to validate against
   validate_bool($expose_team_data)
   validate_hash($team_data)
@@ -33,10 +50,10 @@ class monitoring_check::params (
     $team_data_hash = {
       'team_data' => $team_data
     }
-    file { '/etc/sensu/team_data.json':
-      owner   => 'sensu',
-      group   => 'sensu',
-      mode    => '0444',
+    file { "${etc_dir}/team_data.json":
+      owner   => $user,
+      group   => $group,
+      mode    => $file_mode,
       require => Package['sensu'],
       content => inline_template('<%= require "json"; JSON.generate @team_data_hash %>'),
     }
@@ -53,12 +70,14 @@ class monitoring_check::params (
     }
   }
 
-  file { "${bin_path}/send-test-sensu-alert":
-    ensure => 'file',
-    mode   => '0555',
-    owner  => 'root',
-    group  => 'root',
-    source => 'puppet:///modules/monitoring_check/send-test-sensu-alert',
+  if $::osfamily != 'windows' {
+    file { "${bin_path}/send-test-sensu-alert":
+      ensure => 'file',
+      mode   => '0555',
+      owner  => 'root',
+      group  => 'root',
+      source => 'puppet:///modules/monitoring_check/send-test-sensu-alert',
+    }
   }
 
 }

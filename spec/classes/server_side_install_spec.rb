@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe 'monitoring_check::server_side::install' do
+  let(:facts) { { :osfamily => 'Debian' } }
 
   context "by default" do
     it {
@@ -8,5 +9,5 @@ describe 'monitoring_check::server_side::install' do
       should contain_file('/etc/sensu/plugins/tiny_redis.rb')
     }
   end
-  
+
 end
