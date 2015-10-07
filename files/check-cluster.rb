@@ -155,6 +155,7 @@ private
     # Loop through the arrays and split the hostname so we get a short hostname 
     message = "#{ok} OK out of #{eff_total} total."
     message << " #{silenced} silenced." if config[:silenced] && silenced > 0
+    message << " #{stale.size} stale." unless stale.empty?
     message << " #{ok_pct}% OK, #{config[:critical]}% threshold"
     message << "\nStale hosts: #{stale.map{|host| host.split('.').first}.sort[0..10].join ','}" unless stale.empty?
     message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" unless failing.empty?

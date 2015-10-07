@@ -128,6 +128,15 @@ describe CheckCluster do
       end
     end
 
+    context "should include number of stale hosts in output" do
+      it "when stale hosts are found" do
+        check.send(:check_aggregate, :ok => 90, :total => 100, :silenced => 0,
+                   :failing => [], :stale => [ 'host1', 'host2' ]) do |_, message|
+          expect(message).to match(/ 2 stale\./)
+        end
+      end
+    end
+
     context "should be CRITICAL" do
       let(:config) { super().merge(:min_nodes => 10) }
       it "when minimum nodes not met" do
