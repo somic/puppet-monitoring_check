@@ -136,7 +136,11 @@
 define monitoring_check (
   $command,
   $runbook,
-  $handlers              = ['default'],
+  $handlers              = pick(
+                             hiera("monitoring_check::handlers::${title}", undef),
+                             hiera('monitoring_check::handlers', undef),
+                             ['default']
+                           ),
   $needs_sudo            = false,
   $sudo_user             = 'root',
   $check_every           = '1m',
