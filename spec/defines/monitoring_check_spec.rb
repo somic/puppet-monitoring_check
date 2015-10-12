@@ -65,6 +65,40 @@ describe 'monitoring_check' do
       end
     end
 
+    context 'with non-empty handlers overrides' do
+      let(:params) {{ :command => 'foo', :runbook => 'http://gronk' }}
+      let(:hiera_data) {{
+        'sensu_handlers::teams' => { 'operations' => { } },
+        'monitoring_check::handlers' => ['bar','baz']
+      }}
+      it {
+        should contain_sensu__check('examplecheck').with_handlers(['bar','baz'])
+      }
+    end
+
+    context 'with empty handlers overrides' do
+      let(:params) {{ :command => 'foo', :runbook => 'http://gronk' }}
+      let(:hiera_data) {{
+        'sensu_handlers::teams' => { 'operations' => { } },
+        'monitoring_check::handlers' => []
+      }}
+      it {
+        should contain_sensu__check('examplecheck').with_handlers([])
+      }
+    end
+
+    context 'with check-specific handlers overrides' do
+      let(:params) {{ :command => 'foo', :runbook => 'http://gronk' }}
+      let(:hiera_data) {{
+        'sensu_handlers::teams' => { 'operations' => { } },
+        'monitoring_check::handlers' => ['foo'],
+        'monitoring_check::handlers::examplecheck' => ['qux'],
+      }}
+      it {
+        should contain_sensu__check('examplecheck').with_handlers(['qux'])
+      }
+    end
+
     context "bad runbook (not a uri)" do
       let(:params) { {:command => 'bar', :runbook => 'gronk'} }
       it do
