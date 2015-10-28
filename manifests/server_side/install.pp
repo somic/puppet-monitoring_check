@@ -11,4 +11,11 @@ class monitoring_check::server_side::install (
     mode   => '0555',
     source => 'puppet:///modules/monitoring_check/check_server_side.rb',
   }
+
+  file { '/etc/sensu/plugins/fleet_check.rb':
+    owner  => 'sensu',
+    group  => 'sensu',
+    mode   => '0555',
+    source => 'puppet:///modules/monitoring_check/fleet_check.rb',
+  }
 }
