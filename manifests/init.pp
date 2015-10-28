@@ -128,6 +128,10 @@
 # An array of arbitrary tags that can be used in handlers for different metadata needs
 # such as labels in JIRA handlers. This is optional and is empty by default
 #
+# [*subdue*]
+# A hash the determines if and when a check should be silenced for a peroid of time,
+# such as within working hours.
+#
 # This, by default allows you to set the $::override_sensu_checks_to fact
 # in /etc/facter/facts.d to stop checks on a single machine from alerting via the
 # normal mechanism. Setting this to false will stop this mechanism from applying
@@ -163,6 +167,7 @@ define monitoring_check (
   $source                = undef,
   $can_override          = true,
   $tags                  = [],
+  $subdue                = {},
 ) {
 
   include monitoring_check::params
@@ -185,6 +190,7 @@ define monitoring_check (
 
   validate_array($handlers)
   validate_hash($sensu_custom)
+  validate_hash($subdue)
 
   $interval_s = human_time_to_seconds($check_every)
   validate_re($interval_s, '^\d+$')
@@ -264,6 +270,7 @@ define monitoring_check (
       dependencies        => any2array($dependencies),
       custom              => $custom,
       source              => $source,
+      subdue              => $subdue,
     }
   }
 }

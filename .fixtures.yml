@@ -6,7 +6,7 @@ fixtures:
         ref: 530bb59a8d593bf664868dccd0ca2e84e8ae50f9
     sensu:
         repo: 'git://github.com/sensu/sensu-puppet.git'
-        ref: 9ba0abf38f1a0971bcd044b1bd51b58ec95783d9
+        ref: 53b785e86e0b510cb49d1c90ae01ea1d37b19b43
     apt:
         repo: 'git://github.com/puppetlabs/puppetlabs-apt.git'
         ref: 2.1.0
