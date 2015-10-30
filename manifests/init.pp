@@ -167,7 +167,7 @@ define monitoring_check (
   $source                = undef,
   $can_override          = true,
   $tags                  = [],
-  $subdue                = {},
+  $subdue                = undef,
 ) {
 
   include monitoring_check::params
@@ -190,7 +190,9 @@ define monitoring_check (
 
   validate_array($handlers)
   validate_hash($sensu_custom)
-  validate_hash($subdue)
+  if $subdue != undef {
+    validate_hash($subdue)
+  }
 
   $interval_s = human_time_to_seconds($check_every)
   validate_re($interval_s, '^\d+$')
@@ -260,7 +262,7 @@ define monitoring_check (
   $custom = merge($with_override, $sensu_custom)
 
   if str2bool($use_sensu) {
-    sensu::check { $name:
+    $sensu_check_params = delete_undef_values({
       handlers            => $handlers,
       command             => $real_command,
       interval            => $interval_s,
@@ -271,6 +273,8 @@ define monitoring_check (
       custom              => $custom,
       source              => $source,
       subdue              => $subdue,
-    }
+    })
+    # quotes around $name are needed to ensure its value comes from monitoring_check
+    create_resources('sensu::check', { "${name}" => $sensu_check_params })
   }
 }
