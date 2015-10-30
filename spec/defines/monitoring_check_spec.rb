@@ -37,6 +37,7 @@ describe 'monitoring_check' do
           .with_ensure('present') \
           .with_handlers('default') \
           .with_interval(default_interval) \
+          .without_subdue \
           .with_command('bar') \
           .with_custom({
             "alert_after"        => "0",
@@ -326,6 +327,16 @@ describe 'monitoring_check' do
         "tags"               => ['first_tag','second_tag'],
         }
       )}
+    end
+
+    context 'with subdue' do
+      let(:params) {{
+        :command => 'foo', :runbook => 'http://gronk',
+        :subdue => { 'bar' => 'baz' }
+      }}
+      it {
+        should contain_sensu__check('examplecheck').with_subdue('bar' => 'baz')
+      }
     end
   end
 
