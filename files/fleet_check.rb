@@ -38,11 +38,12 @@
 #   end
 #
 # end
-
 require 'sensu-plugin/utils'
 require 'sensu-plugin/check/cli'
 require 'tiny_redis'
 require 'socket'
+require 'json'
+require 'net/http'
 
 class SensuFleetCheck < Sensu::Plugin::Check::CLI
 
@@ -171,8 +172,8 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
     open_timeout = settings['api'].fetch('open_timeout', 10),
     read_timeout = settings['api'].fetch('read_timeout', 10)
     Net::HTTP.start(settings['api']['host'], settings['api']['port'],
-                    :open_timeout => open_timeout,
                     :read_timeout => read_timeout) do |http|
+      http.open_timeout = open_timeout
       req = Net::HTTP.const_get(method).new(path)
       if settings['api']['user'] && settings['api']['password']
         req.basic_auth(settings['api']['user'], settings['api']['password'])
