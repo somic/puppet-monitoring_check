@@ -119,7 +119,7 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
       sock.puts(new_event.to_json)
       sock.close
 
-      redis.rpush(event[:sensu_client_name]) unless
+      redis.rpush(redis_key, event[:sensu_client_name]) unless
         event_already_triggered?(event[:sensu_client_name])
     rescue => e
       @extra_msgs << "trigger_fail(#{event[:sensu_client_name]}): #{e.message}"
