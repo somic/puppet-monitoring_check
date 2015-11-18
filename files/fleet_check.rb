@@ -103,6 +103,7 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
     # here is the dependency on server side check
     check = settings['checks']["server_side_placeholder_for_#{event_name}"]
     new_event = { 'source' => event[:sensu_client_name],
+                  'name' => event_name,
                   'status' => event[:status],
                   'output' => event[:output],
                   'handlers' => check['actual_handlers'],
