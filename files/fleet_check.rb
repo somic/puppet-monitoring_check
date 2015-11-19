@@ -130,7 +130,7 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
 
   def resolve(sensu_client)
     # sensu docs say they will return HTTP 202 Accepted
-    if api_request(:Delete, "/#{sensu_client}/#{event_name}").code =~ /20/
+    if api_request(:Delete, "/events/#{sensu_client}/#{event_name}").code =~ /20/
       redis.lrem(redis_key, 1, sensu_client)
     end
   end
