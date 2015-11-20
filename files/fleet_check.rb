@@ -13,6 +13,11 @@
 #
 # Fleet checks are only meant to be deployed with monitoring_check::server_side.
 #
+# By default, 'team' parameter for triggered alerts will be taken from puppet
+# definition of this check. Include { 'with_keepalive_team' => true } in
+# sensu_custom parameter if you want fleet check to look up the team
+# that gets keepalive events for this host and use that team instead.
+#
 # Example:
 #
 # $: << '/etc/sensu/plugins'
@@ -115,6 +120,11 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
       new_event[k.to_s] = check[k.to_s]
     end
 
+    if check['with_keepalive_team']
+      team_override = get_client_keepalive_team(event[:sensu_client_name])
+      new_event['team'] = team_override if team_override
+    end
+
     begin
       sock = TCPSocket.new('127.0.0.1', 3030)
       sock.puts(new_event.to_json)
@@ -181,6 +191,15 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
       end
       req = yield(req) if block_given?
       http.request(req)
+    end
+  end
+
+  def get_client_keepalive_team(client_name)
+    begin
+      client_data = JSON.parse(redis.get("client:#{client_name}"))
+      client_data['keepalive']['team']
+    rescue
+      nil
     end
   end
 
