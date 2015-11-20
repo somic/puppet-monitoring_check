@@ -6,9 +6,9 @@
 class monitoring_check::check_cluster_install {
   include monitoring_check::tiny_redis_install
 
-  file { '/etc/sensu/plugins/check-cluster.rb':
-    owner  => 'sensu',
-    group  => 'sensu',
+  file { "${monitoring_check::params::etc_dir}/plugins/check-cluster.rb":
+    owner  => $monitoring_check::params::user,
+    group  => $monitoring_check::params::group,
     mode   => '0755',
     source => 'puppet:///modules/monitoring_check/check-cluster.rb'
   }

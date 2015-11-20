@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe 'monitoring_check::params' do
+  let(:facts) { { :osfamily => 'Debian' } }
 
   # Assume sensu is being installed to satisfy 'require=>' lines
   let(:pre_condition) { 'package { "sensu": }' }
@@ -11,9 +12,14 @@ describe 'monitoring_check::params' do
     it { should contain_file('/usr/bin/send-test-sensu-alert') }
     it { should have_file_resource_count(2)}
   end
-  
+
   context "When the override_sensu_checks_to fact is present" do
-    let(:facts) { { :override_sensu_checks_to => 'test_user' } }
+    let(:facts) do
+      {
+        :osfamily                 => 'Debian',
+        :override_sensu_checks_to => 'test_user'
+      }
+    end
     it { should contain_file('/etc/facter/facts.d/override_sensu_checks_to.txt') }
   end
 
@@ -21,6 +27,11 @@ describe 'monitoring_check::params' do
     let(:params) {{ :bin_path => '/special_bin' }}
     it { should contain_file('/special_bin/send-test-sensu-alert') }
     it { should have_file_resource_count(2)}
+  end
+
+  context "When on windows" do
+    let(:facts) { { :osfamily => 'windows' } }
+    it { should_not contain_file('/usr/bin/send-test-sensu-alert') }
   end
 
 end
