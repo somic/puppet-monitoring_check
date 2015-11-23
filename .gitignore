@@ -1,16 +1,12 @@
-# Bundler
-/.bundle/
-/bin/
-/bundle/
-/vendor/gems/
-/vendor/gem/
-
-# Librarian-Puppet
-/.librarian/
-/.tmp/
-/fixtures/
-
-# Vagrant
-.vagrant
-
-/spec/fixtures/modules/
+.*.sw?
+/pkg
+/spec/fixtures
+/.rspec_system
+/.vagrant
+/.bundle
+/vendor
+/Gemfile.lock
+/junit
+/log
+.yardoc
+coverage
