@@ -1,0 +1,108 @@
+# Change Log
+
+## [Unreleased](https://github.com/Yelp/puppet-monitoring_check/tree/HEAD)
+
+[Full Changelog](https://github.com/Yelp/puppet-monitoring_check/compare/v0.0.5...HEAD)
+
+**Closed issues:**
+
+- Release to the forge? [\#86](https://github.com/Yelp/puppet-monitoring_check/issues/86)
+
+## [v0.0.5](https://github.com/Yelp/puppet-monitoring_check/tree/v0.0.5) (2015-11-23)
+[Full Changelog](https://github.com/Yelp/puppet-monitoring_check/compare/v0.0.3...v0.0.5)
+
+## [v0.0.3](https://github.com/Yelp/puppet-monitoring_check/tree/v0.0.3) (2015-11-23)
+[Full Changelog](https://github.com/Yelp/puppet-monitoring_check/compare/v0.0.2...v0.0.3)
+
+## [v0.0.2](https://github.com/Yelp/puppet-monitoring_check/tree/v0.0.2) (2015-11-23)
+[Full Changelog](https://github.com/Yelp/puppet-monitoring_check/compare/v0.0.4...v0.0.2)
+
+## [v0.0.4](https://github.com/Yelp/puppet-monitoring_check/tree/v0.0.4) (2015-11-23)
+[Full Changelog](https://github.com/Yelp/puppet-monitoring_check/compare/v0.0.1...v0.0.4)
+
+## [v0.0.1](https://github.com/Yelp/puppet-monitoring_check/tree/v0.0.1) (2015-11-23)
+**Closed issues:**
+
+- possible race condition in check-cluster.rb? [\#74](https://github.com/Yelp/puppet-monitoring_check/issues/74)
+- Arbitrary tags in checks [\#71](https://github.com/Yelp/puppet-monitoring_check/issues/71)
+- cluster checks don't exclude themselves from the aggregate check [\#65](https://github.com/Yelp/puppet-monitoring_check/issues/65)
+- revisit new\_check\['status'\] in monitoring\_check::server\_side [\#44](https://github.com/Yelp/puppet-monitoring_check/issues/44)
+- fix tests the right way [\#40](https://github.com/Yelp/puppet-monitoring_check/issues/40)
+- Fix or remove cluster\_check tests [\#34](https://github.com/Yelp/puppet-monitoring_check/issues/34)
+- Deploy monitoring\_check::cluster to a wider net [\#30](https://github.com/Yelp/puppet-monitoring_check/issues/30)
+- Build sensu watchdog meta-check [\#28](https://github.com/Yelp/puppet-monitoring_check/issues/28)
+- So..... aggregates doesn't work the way I thought they did [\#26](https://github.com/Yelp/puppet-monitoring_check/issues/26)
+- Aggregate Timelimits... probably shouldn't exist [\#25](https://github.com/Yelp/puppet-monitoring_check/issues/25)
+- Sensu::VERSION is undefined? [\#24](https://github.com/Yelp/puppet-monitoring_check/issues/24)
+- CRITICAL: Releasing lock due to error: undefined local variable or method `percent\_non\_zero' [\#22](https://github.com/Yelp/puppet-monitoring_check/issues/22)
+- Cluster checked monitoring\_checks should be able to be sent to the aggregate api \*and\* get handled as normal [\#21](https://github.com/Yelp/puppet-monitoring_check/issues/21)
+- cluster\_check should ignore checks or hosts that have been silenced [\#20](https://github.com/Yelp/puppet-monitoring_check/issues/20)
+- cluster\_check should fail with Unknown if deployed to a .12 cluster [\#19](https://github.com/Yelp/puppet-monitoring_check/issues/19)
+- cluster\_check cannot assume that it has access to the check settings [\#18](https://github.com/Yelp/puppet-monitoring_check/issues/18)
+- check\_cluster lacks puppet or ruby tests [\#17](https://github.com/Yelp/puppet-monitoring_check/issues/17)
+- Return codes for check\_cluster.rb never get sent out [\#15](https://github.com/Yelp/puppet-monitoring_check/issues/15)
+- cluster\_check should emit debug information to stdout if it got a lock and ran the check [\#14](https://github.com/Yelp/puppet-monitoring_check/issues/14)
+- Better error message when check is not defined [\#13](https://github.com/Yelp/puppet-monitoring_check/issues/13)
+- check-cluster.rb crashes when trying to load sensu/settings [\#12](https://github.com/Yelp/puppet-monitoring_check/issues/12)
+- cluster\_check should use "undef" as much as possible to reduce default duplication [\#11](https://github.com/Yelp/puppet-monitoring_check/issues/11)
+- Make runbook an optional parameter on the cluster\_check [\#10](https://github.com/Yelp/puppet-monitoring_check/issues/10)
+- monitoring\_check depends on annotate\(\) which is not in this module and not open source [\#9](https://github.com/Yelp/puppet-monitoring_check/issues/9)
+- Use the params class to allow defaults to be overriden [\#8](https://github.com/Yelp/puppet-monitoring_check/issues/8)
+- Rename monitoring\_check::check\_cluster [\#7](https://github.com/Yelp/puppet-monitoring_check/issues/7)
+- Remove config\_dir param in cluster check stuff [\#6](https://github.com/Yelp/puppet-monitoring_check/issues/6)
+
+**Merged pull requests:**
+
+- team override option in fleet check [\#85](https://github.com/Yelp/puppet-monitoring_check/pull/85) ([somic](https://github.com/somic))
+- Making this work for windows. [\#84](https://github.com/Yelp/puppet-monitoring_check/pull/84) ([liamjbennett](https://github.com/liamjbennett))
+- fix api endpoint in fleet check [\#83](https://github.com/Yelp/puppet-monitoring_check/pull/83) ([somic](https://github.com/somic))
+- add name to generated event [\#82](https://github.com/Yelp/puppet-monitoring_check/pull/82) ([somic](https://github.com/somic))
+- fix more bugs in fleet check [\#81](https://github.com/Yelp/puppet-monitoring_check/pull/81) ([somic](https://github.com/somic))
+- fleet\_check.rb fixes [\#80](https://github.com/Yelp/puppet-monitoring_check/pull/80) ([somic](https://github.com/somic))
+- better compat with sensu-puppet for subdue param [\#79](https://github.com/Yelp/puppet-monitoring_check/pull/79) ([somic](https://github.com/somic))
+- Adding support to pass the subdue option into sensu::check [\#78](https://github.com/Yelp/puppet-monitoring_check/pull/78) ([liamjbennett](https://github.com/liamjbennett))
+- add fleet\_check.rb [\#77](https://github.com/Yelp/puppet-monitoring_check/pull/77) ([somic](https://github.com/somic))
+- more flexible way to manage how events are handled [\#76](https://github.com/Yelp/puppet-monitoring_check/pull/76) ([somic](https://github.com/somic))
+- include number of stale values in cluster check output [\#75](https://github.com/Yelp/puppet-monitoring_check/pull/75) ([somic](https://github.com/somic))
+- make source param work with newer sensu-puppet [\#73](https://github.com/Yelp/puppet-monitoring_check/pull/73) ([somic](https://github.com/somic))
+- Adding arbitrary tags \(FIXED \#71\) [\#72](https://github.com/Yelp/puppet-monitoring_check/pull/72) ([jaxxstorm](https://github.com/jaxxstorm))
+- Minimum nodes [\#70](https://github.com/Yelp/puppet-monitoring_check/pull/70) ([jaxxstorm](https://github.com/jaxxstorm))
+- Fixing failing host output [\#69](https://github.com/Yelp/puppet-monitoring_check/pull/69) ([jaxxstorm](https://github.com/jaxxstorm))
+- Display hosts in output [\#68](https://github.com/Yelp/puppet-monitoring_check/pull/68) ([jaxxstorm](https://github.com/jaxxstorm))
+- raise meaningful error when no servers found for cluster check [\#67](https://github.com/Yelp/puppet-monitoring_check/pull/67) ([keymone](https://github.com/keymone))
+- Omit check results with same name as cluster\_name FIXES \#65 [\#66](https://github.com/Yelp/puppet-monitoring_check/pull/66) ([jaxxstorm](https://github.com/jaxxstorm))
+- If the lock expires sooner than rtt to redis server, return ok [\#63](https://github.com/Yelp/puppet-monitoring_check/pull/63) ([jglukasik](https://github.com/jglukasik))
+- Default interval [\#62](https://github.com/Yelp/puppet-monitoring_check/pull/62) ([jglukasik](https://github.com/jglukasik))
+- Removing comments on runbook, tip passthru [\#61](https://github.com/Yelp/puppet-monitoring_check/pull/61) ([jglukasik](https://github.com/jglukasik))
+- repoint apt in fixtures to proper upstream [\#60](https://github.com/Yelp/puppet-monitoring_check/pull/60) ([somic](https://github.com/somic))
+- Debug help [\#58](https://github.com/Yelp/puppet-monitoring_check/pull/58) ([jglukasik](https://github.com/jglukasik))
+- add some unit tests for check\_sever\_side.rb [\#57](https://github.com/Yelp/puppet-monitoring_check/pull/57) ([somic](https://github.com/somic))
+- suppress notifications from server-side placeholder [\#56](https://github.com/Yelp/puppet-monitoring_check/pull/56) ([somic](https://github.com/somic))
+- Remove cluster name from params, use generic defaults [\#55](https://github.com/Yelp/puppet-monitoring_check/pull/55) ([jglukasik](https://github.com/jglukasik))
+- Use a host's region as the default cluster [\#54](https://github.com/Yelp/puppet-monitoring_check/pull/54) ([jglukasik](https://github.com/jglukasik))
+- add source parameter to monitoring\_check class [\#52](https://github.com/Yelp/puppet-monitoring_check/pull/52) ([Rob-Johnson](https://github.com/Rob-Johnson))
+- To spawn no handers, send an empty array in the "handlers" param [\#51](https://github.com/Yelp/puppet-monitoring_check/pull/51) ([jglukasik](https://github.com/jglukasik))
+- Make send-test-sensu-alert respect check ttl [\#50](https://github.com/Yelp/puppet-monitoring_check/pull/50) ([solarkennedy](https://github.com/solarkennedy))
+- Add option to not use handlers for a monitoring check [\#49](https://github.com/Yelp/puppet-monitoring_check/pull/49) ([jglukasik](https://github.com/jglukasik))
+- Removed annotation feature [\#48](https://github.com/Yelp/puppet-monitoring_check/pull/48) ([solarkennedy](https://github.com/solarkennedy))
+- add event\_name to server side check [\#47](https://github.com/Yelp/puppet-monitoring_check/pull/47) ([somic](https://github.com/somic))
+- several improvements in server side check [\#46](https://github.com/Yelp/puppet-monitoring_check/pull/46) ([somic](https://github.com/somic))
+- workaround for bug in upstream - require json in check\_server\_side.rb [\#45](https://github.com/Yelp/puppet-monitoring_check/pull/45) ([somic](https://github.com/somic))
+- Make the teams.json file depend on the sensu package existing [\#42](https://github.com/Yelp/puppet-monitoring_check/pull/42) ([solarkennedy](https://github.com/solarkennedy))
+- fix tests the quick way [\#39](https://github.com/Yelp/puppet-monitoring_check/pull/39) ([somic](https://github.com/somic))
+- monitoring\_check::synchronized [\#37](https://github.com/Yelp/puppet-monitoring_check/pull/37) ([somic](https://github.com/somic))
+- Fixup docstrings [\#35](https://github.com/Yelp/puppet-monitoring_check/pull/35) ([kmosher](https://github.com/kmosher))
+- Added send-test-sensu-alert script [\#32](https://github.com/Yelp/puppet-monitoring_check/pull/32) ([solarkennedy](https://github.com/solarkennedy))
+- Remove the ensure option, as monitoring\_checks are purged [\#31](https://github.com/Yelp/puppet-monitoring_check/pull/31) ([hashbrowncipher](https://github.com/hashbrowncipher))
+- Add override\_sensu\_checks\_to feature [\#27](https://github.com/Yelp/puppet-monitoring_check/pull/27) ([bobtfish](https://github.com/bobtfish))
+- Brought in annotation references to make the module depend on less Yelp infrastructure. Closes \#9 [\#23](https://github.com/Yelp/puppet-monitoring_check/pull/23) ([solarkennedy](https://github.com/solarkennedy))
+- Added params class to start potentially handling default cases. Closes \#8 [\#16](https://github.com/Yelp/puppet-monitoring_check/pull/16) ([solarkennedy](https://github.com/solarkennedy))
+- Give each check a timeout by default [\#5](https://github.com/Yelp/puppet-monitoring_check/pull/5) ([hashbrowncipher](https://github.com/hashbrowncipher))
+- Better error if we have no teams data [\#4](https://github.com/Yelp/puppet-monitoring_check/pull/4) ([bobtfish](https://github.com/bobtfish))
+- Initial stab at monitoring\_check::cluster [\#3](https://github.com/Yelp/puppet-monitoring_check/pull/3) ([keymone](https://github.com/keymone))
+- Added validation to the command if we are running sudo [\#2](https://github.com/Yelp/puppet-monitoring_check/pull/2) ([solarkennedy](https://github.com/solarkennedy))
+- Add the ability to auto-annotate monitoring\_checks [\#1](https://github.com/Yelp/puppet-monitoring_check/pull/1) ([hashbrowncipher](https://github.com/hashbrowncipher))
+
+
+
+\* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*
