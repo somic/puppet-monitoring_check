@@ -1,6 +1,6 @@
 {
   "name": "yelp-monitoring_check",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "author": "yelp",
   "summary": "Wrapper for sensu::check with Yelpisms",
   "license": "Apache 2.0",
