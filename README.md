@@ -41,6 +41,54 @@ setting `monitoring_check::params::expose_team_data` to false.
 
 *Note*: Team data is always exposed on the sensu-server.
 
+## Checks that run on sensu servers
+
+`monitoring_check` runs on sensu clients, it is called by `sensu-client` process
+on each host it is configured on. In order to support more complex monitoring
+scenarios, we built the following types of checks that run on sensu servers.
+
+### Cluster check
+
+Given a name of the event, this check obtains current status of this event
+for all clients, discards stale values, calculates percentage of clients
+where this event has been triggered and triggers its own event if this
+percentage is higher than a configurable threshold.
+
+Common use case is each host runs a check that is not handled by notification
+handlers and cluster check is deployed to page or ticket when this check starts
+failing on some number of clients. This helps reduce monitoring noise - as in
+"don't page when a single web server is slow, page when many web servers are slow."
+
+See manifests/cluster.pp
+
+### Server side check
+
+Server side check usually checks something external
+to the host it is running on - for example, a piece of hardware that can
+be pinged but can't run sensu checks itself.
+
+Common use case could be hit a URL and alert on HTTP 500, for example. Server
+side checks have a built-in HA mechanism that ensures a single run of the check
+per time period (configurable) regardless of how many sensu servers you have
+in this cluster.
+
+See manifests/server_side.pp
+
+### Fleet check
+
+Fleet check runs on sensu servers. It's meant for situations where it's
+desirable to run the check in centralized location but trigger separate events
+for individual clients.
+
+For example, you could have a script that talks to cloud provider API, obtains
+a list of hosts, checks something and then triggers events for each client
+individually.
+
+Another use case could be something like "trigger some event for
+the slowest 5% of clients of a certain type (say, database servers)."
+
+See files/fleet_check.pp
+
 ## Limitations / Explanation
 
 This wrapper *only* works with the Yelp handlers. The secret is that a sensu 
