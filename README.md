@@ -43,7 +43,7 @@ setting `monitoring_check::params::expose_team_data` to false.
 
 ## Checks that run on sensu servers
 
-`monitoring_check` runs on sensu clients, it is called by `sensu-client` process
+`monitoring_check` runs on sensu clients. It is called by `sensu-client` process
 on each host it is configured on. In order to support more complex monitoring
 scenarios, we built the following types of checks that run on sensu servers.
 
@@ -54,12 +54,13 @@ for all clients, discards stale values, calculates percentage of clients
 where this event has been triggered and triggers its own event if this
 percentage is higher than a configurable threshold.
 
-Common use case is each host runs a check that is not handled by notification
-handlers and cluster check is deployed to page or ticket when this check starts
-failing on some number of clients. This helps reduce monitoring noise - as in
-"don't page when a single web server is slow, page when many web servers are slow."
+A common use for this cluster check is where each host runs a check that is
+not handled by notification handlers and cluster check is deployed to page
+or ticket when this check starts failing on some number of clients. This helps
+reduce monitoring noise - as in "don't page when a single web server is slow,
+page when many web servers are slow."
 
-See manifests/cluster.pp
+See [manifests/cluster.pp]((https://github.com/Yelp/puppet-monitoring_check/blob/master/manifests/cluster.pp)
 
 ### Server side check
 
@@ -72,7 +73,7 @@ side checks have a built-in HA mechanism that ensures a single run of the check
 per time period (configurable) regardless of how many sensu servers you have
 in this cluster.
 
-See manifests/server_side.pp
+See [manifests/server_side.pp](https://github.com/Yelp/puppet-monitoring_check/blob/master/manifests/server_side.pp)
 
 ### Fleet check
 
@@ -87,7 +88,7 @@ individually.
 Another use case could be something like "trigger some event for
 the slowest 5% of clients of a certain type (say, database servers)."
 
-See files/fleet_check.pp
+See [files/fleet_check.rb](https://github.com/Yelp/puppet-monitoring_check/blob/master/files/fleet_check.rb)
 
 ## Limitations / Explanation
 
