@@ -60,7 +60,7 @@ or ticket when this check starts failing on some number of clients. This helps
 reduce monitoring noise - as in "don't page when a single web server is slow,
 page when many web servers are slow."
 
-See [manifests/cluster.pp]((https://github.com/Yelp/puppet-monitoring_check/blob/master/manifests/cluster.pp)
+See [manifests/cluster.pp](https://github.com/Yelp/puppet-monitoring_check/blob/master/manifests/cluster.pp)
 
 ### Server side check
 
