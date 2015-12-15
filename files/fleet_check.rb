@@ -72,6 +72,10 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
     @trigger_list = [ ]
     @resolve_list = [ ]
     build_event_lists
+    auto_resolve_old_alerts
+
+    trigger_list.uniq!
+    resolve_list.uniq!
     trigger_list.each { |event| trigger(event) }
     resolve_list.each { |sensu_client| resolve(sensu_client) }
 
@@ -139,8 +143,14 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
   end
 
   def resolve(sensu_client)
-    # sensu docs say they will return HTTP 202 Accepted
-    if api_request(:Delete, "/events/#{sensu_client}/#{event_name}").code =~ /20/
+    # sensu docs say they will return HTTP 202 Accepted on success.
+    # if client is still in sensu, resolve the event through API;
+    # remove client from our key in this case only if API request was successful
+    api_response = nil
+    if redis.sismember('clients', sensu_client) == 1
+      api_response = api_request(:Delete, "/events/#{sensu_client}/#{event_name}")
+    end
+    if api_response.nil? || api_response.code =~ /20/
       redis.lrem(redis_key, 1, sensu_client)
     end
   end
@@ -200,6 +210,17 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
       client_data['keepalive']['team']
     rescue
       nil
+    end
+  end
+
+  # any client that appears in clients_with_triggered_event but does
+  # not appear in latest trigger_list either has been shut down or
+  # its event cleared; resolve events for such clients automatically
+  def auto_resolve_old_alerts
+    return if clients_with_triggered_event.empty?
+    trigger_client_names = trigger_list.map { |e| e[:sensu_client_name] }
+    clients_with_triggered_event.each do |client_name|
+      resolve_list << client_name unless trigger_client_names.include?(client_name)
     end
   end
 
