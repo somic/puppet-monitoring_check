@@ -5,6 +5,7 @@ before_install:
   - rm Gemfile.lock || true
 rvm:
   - 2.1.2
+sudo: false
 script: bundle exec rake spec
 env:
   matrix:
