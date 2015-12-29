@@ -9,7 +9,7 @@ gem 'puppetlabs_spec_helper'
 gem 'travis'
 gem 'travis-lint'
 gem 'puppet-syntax'
-gem 'puppet', ENV['PUPPET_VERSION'] || '~> 3.6.0'
+gem 'puppet', ENV['PUPPET_VERSION'] || '~> 3.8.0'
 gem 'vagrant-wrapper'
 gem 'rspec-puppet-utils'
 
