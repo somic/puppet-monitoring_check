@@ -47,7 +47,7 @@ describe TinyRedis::Mutex do
 
     it "should clear lock upon error" do
       expect(locker).to receive(:expire).with(10)
-      expect(locker).to receive(:expire).with
+      expect(locker).to receive(:expire).with(no_args)
       expect { locker.run_with_lock_or_skip { raise "fail" } }.to raise_error
     end
   end
