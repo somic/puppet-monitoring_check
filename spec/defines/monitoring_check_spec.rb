@@ -230,7 +230,7 @@ describe 'monitoring_check' do
     end
     context "sudo with a non qualified command" do
       let(:params) { {:command => 'bar --foo --baz', :runbook => 'http://gronk', :needs_sudo => true, :sudo_user => 'fred'} }
-      it { expect { should compile }.to raise_error() }
+      it { should_not compile }
     end
 
     context "check with timeout" do
