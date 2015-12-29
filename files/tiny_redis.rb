@@ -58,6 +58,8 @@ module TinyRedis
 
     RN = "\r\n"
 
+    attr_reader :host, :port
+
     def initialize(host='localhost', port=6379)
       @host = host
       @port = port

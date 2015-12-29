@@ -23,7 +23,9 @@ describe CheckCluster do
         :echo    => "hello",
         :setnx   => 1,
         :pexpire => 1,
-        :get     => Time.now.to_i - 5)
+        :get     => Time.now.to_i - 5,
+        :host    => '127.0.0.1',
+        :port    => 7777, )
     end
   end
 
@@ -87,9 +89,15 @@ describe CheckCluster do
     end
 
     context "should be CRITICAL" do
-      it "when exception happened" do
+      it "when exception happened on :setnx" do
         expect(redis).to receive(:setnx).and_raise "rspec error"
         expect_status :critical, /rspec error/
+        check.run
+      end
+
+      it "when SocketError happened" do
+        expect(TinyRedis::Mutex).to receive(:new).and_raise SocketError
+        expect_status :critical, /SocketError: 127.0.0.1:7777/
         check.run
       end
     end
