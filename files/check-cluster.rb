@@ -106,6 +106,8 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     end
 
     critical "Cluster check did not execute, ttl: #{ttl.inspect}"
+  rescue SocketError => e
+    critical "#{e.message}: #{redis.host}:#{redis.port}"
   rescue RuntimeError => e
     critical "#{e.message} (#{e.class}): #{e.backtrace.inspect}"
   end
