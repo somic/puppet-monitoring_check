@@ -262,6 +262,9 @@ define monitoring_check (
   $custom = merge($with_override, $sensu_custom)
 
   if str2bool($use_sensu) {
+    if !defined(Class['sensu']) {
+      fail("monitoring_check $title defined before the sensu class was included")
+    }
     $sensu_check_params = delete_undef_values({
       handlers            => $handlers,
       command             => $real_command,
