@@ -105,7 +105,7 @@ define monitoring_check::server_side (
     low_flap_threshold    => $low_flap_threshold,
     high_flap_threshold   => $high_flap_threshold,
     can_override          => $can_override,
-    tags                  => $tags,
+    tags                  => flatten([['server_side', "executed_by ${::fqdn}"], $tags]),
     source                => $source,
   }
 

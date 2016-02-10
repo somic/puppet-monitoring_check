@@ -26,14 +26,18 @@ describe 'monitoring_check::server_side' do
   context 'by default' do
     let(:params) {{
       :command => 'foo', :runbook => 'y/bar', :source => 'baz',
-      :team => 'qux',
+      :team => 'qux', :tags => ['test']
     }}
+    let(:facts) {{
+      :fqdn => 'host1'
+      }}
 
     it {
       should contain_class('monitoring_check::server_side::install')
       should contain_monitoring_check('server_side_placeholder_for_example1') \
                .with_command(/check_server_side.rb/) \
                .with_source('baz') \
+               .with_tags(['test', 'server_side', 'executed_by host1'])
                .with_sensu_custom({
                  'actual_command' => 'foo',
                  'actual_name'    => 'example1',
@@ -69,5 +73,5 @@ describe 'monitoring_check::server_side' do
       expect { should compile }.to raise_error(/not a string/)
     }
   end
-  
+
 end
