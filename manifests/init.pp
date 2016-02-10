@@ -187,6 +187,7 @@ define monitoring_check (
   $team_names = join(keys($team_data), '|')
   validate_re($team, "^(${team_names})$")
   validate_bool($ticket)
+  validate_array($tags)
 
   validate_array($handlers)
   validate_hash($sensu_custom)

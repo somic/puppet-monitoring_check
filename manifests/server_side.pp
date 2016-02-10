@@ -64,9 +64,11 @@ define monitoring_check::server_side (
   $low_flap_threshold    = undef,
   $high_flap_threshold   = undef,
   $can_override          = true,
+  $tags                  = [],
 ) {
   validate_string($source)
   validate_string($event_name)
+  validate_array($tags)
 
   include monitoring_check::server_side::install
 
@@ -103,6 +105,7 @@ define monitoring_check::server_side (
     low_flap_threshold    => $low_flap_threshold,
     high_flap_threshold   => $high_flap_threshold,
     can_override          => $can_override,
+    tags                  => $tags,
     source                => $source,
   }
 
