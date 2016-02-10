@@ -9,13 +9,14 @@ describe 'monitoring_check::server_side' do
   }}
 
   let(:facts) {{
-    :ipaddress => '127.0.0.1',
-    :osfamily => 'Debian',
-    :lsbdistid => 'Ubuntu',
-    :lsbdistcodename => 'Lucid',
-    :operatingsystem => 'Ubuntu',
-    :puppetversion => '3.6.2',
-    :habitat       => 'somehabitat',
+    :ipaddress        => '127.0.0.1',
+    :osfamily         => 'Debian',
+    :lsbdistid        => 'Ubuntu',
+    :lsbdistcodename  => 'Lucid',
+    :operatingsystem  => 'Ubuntu',
+    :puppetversion    => '3.6.2',
+    :habitat          => 'somehabitat',
+    :fqdn             => 'host1',
   }}
 
   let(:pre_condition) { %q{
@@ -26,7 +27,7 @@ describe 'monitoring_check::server_side' do
   context 'by default' do
     let(:params) {{
       :command => 'foo', :runbook => 'y/bar', :source => 'baz',
-      :team => 'qux',
+      :team => 'qux', :tags => ['test']
     }}
 
     it {
@@ -34,6 +35,7 @@ describe 'monitoring_check::server_side' do
       should contain_monitoring_check('server_side_placeholder_for_example1') \
                .with_command(/check_server_side.rb/) \
                .with_source('baz') \
+               .with_tags(['server_side', 'executed_by host1', 'test'])
                .with_sensu_custom({
                  'actual_command' => 'foo',
                  'actual_name'    => 'example1',
@@ -69,5 +71,5 @@ describe 'monitoring_check::server_side' do
       expect { should compile }.to raise_error(/not a string/)
     }
   end
-  
+
 end
