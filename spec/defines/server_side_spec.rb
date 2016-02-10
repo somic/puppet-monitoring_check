@@ -9,13 +9,14 @@ describe 'monitoring_check::server_side' do
   }}
 
   let(:facts) {{
-    :ipaddress => '127.0.0.1',
-    :osfamily => 'Debian',
-    :lsbdistid => 'Ubuntu',
-    :lsbdistcodename => 'Lucid',
-    :operatingsystem => 'Ubuntu',
-    :puppetversion => '3.6.2',
-    :habitat       => 'somehabitat',
+    :ipaddress        => '127.0.0.1',
+    :osfamily         => 'Debian',
+    :lsbdistid        => 'Ubuntu',
+    :lsbdistcodename  => 'Lucid',
+    :operatingsystem  => 'Ubuntu',
+    :puppetversion    => '3.6.2',
+    :habitat          => 'somehabitat',
+    :fqdn             => 'host1',
   }}
 
   let(:pre_condition) { %q{
@@ -28,11 +29,6 @@ describe 'monitoring_check::server_side' do
       :command => 'foo', :runbook => 'y/bar', :source => 'baz',
       :team => 'qux', :tags => ['test']
     }}
-    let(:facts) {{
-      :fqdn => 'host1',
-      :osfamily => 'debian',
-      :lsbdistid => 'lucid'
-      }}
 
     it {
       should contain_class('monitoring_check::server_side::install')
