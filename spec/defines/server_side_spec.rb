@@ -29,7 +29,9 @@ describe 'monitoring_check::server_side' do
       :team => 'qux', :tags => ['test']
     }}
     let(:facts) {{
-      :fqdn => 'host1'
+      :fqdn => 'host1',
+      :osfamily => 'debian',
+      :lsbdistid => 'lucid'
       }}
 
     it {
@@ -37,7 +39,7 @@ describe 'monitoring_check::server_side' do
       should contain_monitoring_check('server_side_placeholder_for_example1') \
                .with_command(/check_server_side.rb/) \
                .with_source('baz') \
-               .with_tags(['test', 'server_side', 'executed_by host1'])
+               .with_tags(['server_side', 'executed_by host1', 'test'])
                .with_sensu_custom({
                  'actual_command' => 'foo',
                  'actual_name'    => 'example1',
