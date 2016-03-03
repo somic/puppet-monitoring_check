@@ -20,6 +20,11 @@ if !defined?(IN_RSPEC)
   require 'json'
 end
 
+
+class NoServersFound < RuntimeError
+end
+
+
 class CheckCluster < Sensu::Plugin::Check::CLI
   option :cluster_name,
     :short => "-N NAME",
@@ -107,7 +112,9 @@ class CheckCluster < Sensu::Plugin::Check::CLI
 
     critical "Cluster check did not execute, ttl: #{ttl.inspect}"
   rescue SocketError => e
-    critical "#{e.message}: #{redis.host}:#{redis.port}"
+    unknown "Can't connect to Redis at #{redis.host}:#{redis.port}: #{e.message}"
+  rescue NoServersFound => e
+    unknown "#{e.message}"
   rescue RuntimeError => e
     critical "#{e.message} (#{e.class}): #{e.backtrace.inspect}"
   end
@@ -197,6 +204,7 @@ private
   end
 end
 
+
 class RedisCheckAggregate
   attr_accessor :logger
 
@@ -251,7 +259,7 @@ class RedisCheckAggregate
     # TODO: reimplement using @redis.scan for webscale
     @servers ||= begin
       keys = @redis.keys("result:*:#@check")
-      raise "No servers found for #@check" if !keys || keys.empty?
+      raise NoServersFound("No servers found for #@check") if !keys || keys.empty?
       keys.map {|key| key.split(':')[1] }.reject {|s| s == @cluster_name }
     end
   end
