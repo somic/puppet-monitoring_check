@@ -55,7 +55,7 @@ class monitoring_check::params (
       group   => $group,
       mode    => $file_mode,
       require => Package['sensu'],
-      content => inline_template('<%= require "json"; JSON.generate @team_data_hash %>'),
+      content => inline_template('<%= require "json"; (JSON.pretty_generate @team_data_hash) + $/ %>'),
     }
   }
 
