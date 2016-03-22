@@ -94,15 +94,15 @@ describe CheckCluster do
         expect_status :critical, /rspec error/
         check.run
       end
-
-      it "when SocketError happened" do
-        expect(TinyRedis::Mutex).to receive(:new).and_raise SocketError
-        expect_status :critical, /SocketError: 127.0.0.1:7777/
-        check.run
-      end
     end
 
     context "should be UNKNOWN" do
+      it "when SocketError happens" do
+        expect(TinyRedis::Mutex).to receive(:new).and_raise SocketError
+        expect_status :unknown, /127.0.0.1:7777: SocketError$/
+        check.run
+      end
+
       it "when wrong version of sensu" do
         stub_const("Sensu::VERSION", "0.12")
         expect_status :unknown, "Sensu <0.13 is not supported"
