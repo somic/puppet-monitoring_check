@@ -209,7 +209,7 @@ define monitoring_check (
   validate_re("$realert_every", '^(-)?\d+$')
 
   if $source != undef {
-    validate_string($source)
+    validate_re("$source", '^[\w\.-]+$', 'Source cannot contain whitespace or special characters')
   }
 
   # TODO: Handle this logic at the handler level?

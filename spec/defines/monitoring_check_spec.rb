@@ -308,6 +308,11 @@ describe 'monitoring_check' do
         }
       ).with_source('mysource') }
     end
+    context "with a source which has a space" do
+      let(:facts) { { :habitat => "somehabitat", :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
+      let(:params) { {:command => 'bar', :runbook => 'http://gronk', :source => 'my source' } }
+      it { should_not compile }
+    end
     context "with tags" do
       let(:facts) { { :habitat => "somehabitat", :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :tags => ['first_tag', 'second_tag'] } }
@@ -341,4 +346,3 @@ describe 'monitoring_check' do
   end
 
 end
-
