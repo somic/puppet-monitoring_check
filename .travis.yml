@@ -4,10 +4,9 @@ before_install:
   - gem install bundler
   - rm Gemfile.lock || true
 rvm:
-  - 2.1.2
+  - 2.2
 sudo: false
 script: bundle exec rake spec
 env:
   matrix:
   - PUPPET_VERSION="~> 3.6.2" STRICT_VARIABLES=yes
-
