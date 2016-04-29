@@ -103,6 +103,15 @@
 # These will override any parameters configured by the wrapper.
 # Defaults to an empty hash.
 #
+# [*use_remediation*]
+# Should a script run automatically when a check fails?
+#
+# [*remediation_action*]
+# Which script should run when a check fails?
+#
+# [*remediation_retries*]
+# How many times should the script run before the check is marked as failed?
+#
 # [*low_flap_threshold*]
 # Custom threshold at which to consider this service as having stopped flapping.
 # Defaults to unset
@@ -162,6 +171,9 @@ define monitoring_check (
   $dependencies          = [],
   $use_sensu             = hiera('sensu_enabled', true),
   $sensu_custom          = {},
+  $use_remediation       = false,
+  $remediation_action    = '',
+  $remediation_retries   = 1,
   $low_flap_threshold    = undef,
   $high_flap_threshold   = undef,
   $source                = undef,
@@ -188,6 +200,7 @@ define monitoring_check (
   validate_re($team, "^(${team_names})$")
   validate_bool($ticket)
   validate_array($tags)
+  validate_bool($use_remediation)
 
   validate_array($handlers)
   validate_hash($sensu_custom)
@@ -220,10 +233,26 @@ define monitoring_check (
     $irc_channel_array = $team_hash[$team]['notifications_irc_channel']
   }
 
+  if $use_remediation {
+    file { "${monitoring_check::params::etc_dir}/plugins/remediation.sh":
+      owner  => $monitoring_check::params::user,
+      group  => $monitoring_check::params::group,
+      mode   => '0555',
+      source => 'puppet:///modules/monitoring_check/remediation.sh',
+    }
+
+    validate_re($remediation_action, '^/.*', "Your command, ${remediation_action}, must use a full path")
+    validate_integer($remediation_retries)
+
+    $sudo_command = "${monitoring_check::params::etc_dir}/plugins/remediation.sh -n \"${name}\" -c \"${command}\" -a \"${remediation_action}\" -r ${remediation_retries}"
+  } else {
+    $sudo_command = $command
+  }
+
   if str2bool($needs_sudo) {
-    validate_re($command, '^/.*', "Your command, ${command}, must use a full path if you are going to use sudo")
-    $real_command = "sudo -H -u ${sudo_user} -- ${command}"
-    $cmd = regsubst($command, '^(\S+).*','\1') # Strip the options off, leaving just the check script
+    validate_re($sudo_command, '^/.*', "Your command, ${sudo_command}, must use a full path if you are going to use sudo")
+    $real_command = "sudo -H -u ${sudo_user} -- ${sudo_command}"
+    $cmd = regsubst($sudo_command, '^(\S+).*','\1') # Strip the options off, leaving just the check script
     if str2bool($use_sensu) {
       sudo::conf { "sensu_${title}":
         priority => 10,
@@ -233,9 +262,8 @@ define monitoring_check (
     }
   }
   else {
-    $real_command = $command
+    $real_command = $sudo_command
   }
-
 
   $base_dict = {
     alert_after        => $alert_after_s,
