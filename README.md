@@ -13,7 +13,7 @@ including how noisy they are, which teams get notified, and how.
 ## Examples
 
 ```puppet
-# Page if operations if cron isn't running
+# Page the operations team if cron isn't running
 monitoring_check { 'cron':
   alert_after => '5m',
   check_every => '1m',
