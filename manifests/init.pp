@@ -103,9 +103,6 @@
 # These will override any parameters configured by the wrapper.
 # Defaults to an empty hash.
 #
-# [*use_remediation*]
-# Should a script run automatically when a check fails?
-#
 # [*remediation_action*]
 # Which script should run when a check fails?
 #
@@ -171,8 +168,7 @@ define monitoring_check (
   $dependencies          = [],
   $use_sensu             = hiera('sensu_enabled', true),
   $sensu_custom          = {},
-  $use_remediation       = false,
-  $remediation_action    = '',
+  $remediation_action    = undef,
   $remediation_retries   = 1,
   $low_flap_threshold    = undef,
   $high_flap_threshold   = undef,
@@ -233,13 +229,8 @@ define monitoring_check (
     $irc_channel_array = $team_hash[$team]['notifications_irc_channel']
   }
 
-  if $use_remediation {
-    file { "${monitoring_check::params::etc_dir}/plugins/remediation.sh":
-      owner  => $monitoring_check::params::user,
-      group  => $monitoring_check::params::group,
-      mode   => '0555',
-      source => 'puppet:///modules/monitoring_check/remediation.sh',
-    }
+  if $remediation_action != undef {
+    include monitoring_check::remediation
 
     validate_re($remediation_action, '^/.*', "Your command, ${remediation_action}, must use a full path")
     validate_integer($remediation_retries)

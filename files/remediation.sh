@@ -28,7 +28,7 @@ done
 
 CHECK_OUTPUT=$($CHECK)
 CHECK_EXITCODE=$?
-if [ $CHECK_EXITCODE -ne 0 ]; then
+if [ $CHECK_EXITCODE -eq 2 ]; then
 # The check failed. Lets try remediation
   if [ -f "/tmp/$NAME" ]; then
     # We've tried this before. Let's see if we have retries left
