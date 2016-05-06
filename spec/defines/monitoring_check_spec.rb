@@ -333,6 +333,14 @@ describe 'monitoring_check' do
         }
       )}
     end
+    context "with remediation" do
+      let(:facts) { { :habitat => "somehabitat", :lsbdistid => 'Ubuntu', :osfamily => 'Debian', :lsbdistcodename => 'lucid', :operatingsystem => 'Ubuntu', :ipaddress => '127.0.0.1', :puppetversion => '3.6.2' } }
+      let(:params) { {:command => '/bin/bar', :runbook => 'http://gronk', :remediation_action => '/bin/ls /', :remediation_retries => 2 } }
+      it { should contain_sensu__check('examplecheck')
+        .with_command('/etc/sensu/plugins/remediation.sh -n "examplecheck" -c "/bin/bar" -a "/bin/ls\ /" -r 2') \
+      }
+    end
+
 
     context 'with subdue' do
       let(:params) {{

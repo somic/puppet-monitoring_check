@@ -10,4 +10,3 @@ script: bundle exec rake spec
 env:
   matrix:
   - PUPPET_VERSION="~> 3.6.2" STRICT_VARIABLES=yes
-
