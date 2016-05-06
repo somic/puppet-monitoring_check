@@ -196,7 +196,6 @@ define monitoring_check (
   validate_re($team, "^(${team_names})$")
   validate_bool($ticket)
   validate_array($tags)
-  validate_bool($use_remediation)
 
   validate_array($handlers)
   validate_hash($sensu_custom)
