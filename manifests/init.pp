@@ -214,14 +214,8 @@ define monitoring_check (
 
   $alert_after_s = human_time_to_seconds($alert_after)
 
-  if $realert_every == "-1" {
-    $realert_every_s = "-1"
-  } else {
-    $realert_every_s = human_time_to_seconds($realert_every)
-  }
-
   validate_re("$alert_after_s", '^\d+$')
-  validate_re("$realert_every_s", '^(-)?\d+$')
+  validate_re("$realert_every", '^(-)?\d+$')
 
   if $source != undef {
     validate_re("$source", '^[\w\.-]+$', 'Source cannot contain whitespace or special characters')
