@@ -238,7 +238,7 @@ define monitoring_check (
     $safe_command = shell_escape($command)
     $safe_remediation_action = shell_escape($remediation_action)
 
-    $sudo_command = "${monitoring_check::params::etc_dir}/plugins/remediation.sh -n \"${name}\" -c \"${safe_command}\" -a \"${safe_remediation_action}\" -r ${remediation_retries}"
+    $sudo_command = "${monitoring_check::params::etc_dir}/plugins/remediation.sh -n \"${name}\" -c ${safe_command} -a ${safe_remediation_action} -r ${remediation_retries}"
   } else {
     $sudo_command = $command
   }
