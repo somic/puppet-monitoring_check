@@ -41,6 +41,7 @@ if [ $CHECK_EXITCODE -eq 2 ]; then
   else
     ACTION_OUTPUT=$($ACTION)
     ACTION_EXITCODE=$?
+    ATTEMPTS=0
     if [ $RETRIES -eq 0 ]; then
       # We should alert if we don't want to retry
       # This case is when we want the remediation action output after 1 failed
