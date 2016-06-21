@@ -69,7 +69,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :long => "--verbose",
     :description => "Print debug information",
     :default => false
-  
+
   def run
     unless check_sensu_version
       unknown "Sensu <0.13 is not supported"
@@ -161,7 +161,7 @@ private
 
     ok_pct  = (100 * ok / eff_total.to_f).to_i
 
-    # Loop through the arrays and split the hostname so we get a short hostname 
+    # Loop through the arrays and split the hostname so we get a short hostname
     message = "#{ok} OK out of #{eff_total} total."
     message << " #{silenced} silenced." if config[:silenced] && silenced > 0
     message << " #{stale.size} stale." unless stale.empty?
@@ -259,7 +259,7 @@ class RedisCheckAggregate
     # TODO: reimplement using @redis.scan for webscale
     @servers ||= begin
       keys = @redis.keys("result:*:#@check")
-      raise NoServersFound("No servers found for #@check") if !keys || keys.empty?
+      raise NoServersFound.new("No servers found for #@check") if !keys || keys.empty?
       keys.map {|key| key.split(':')[1] }.reject {|s| s == @cluster_name }
     end
   end
