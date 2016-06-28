@@ -52,6 +52,13 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :proc => proc {|a| a.to_i },
     :default => 80
 
+  options :num_critical,
+    :short => '-u NUM',
+    :long => '--num-critical NUM',
+    :description => 'NUMBER (not percent) of non-ok before critical',
+    :proc => proc {|a| a.to_i },
+    :required => false
+
   option :silenced,
     :short => "-S yes",
     :long => "--silenced yes",
@@ -170,7 +177,11 @@ private
     message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" unless failing.empty?
     message << "\nMinimum number of hosts required is #{config[:min_nodes]} and only #{ok} found" if ok < config[:min_nodes]
 
-    state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
+    if config[:num_critical]
+      state = ok >= config[:num_critical] ? 'OK': 'CRITICAL'
+    else
+      state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
+    end
     state = ok >= config[:min_nodes] ? state : 'CRITICAL'
     return state, message
   end
