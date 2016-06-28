@@ -45,14 +45,14 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "Aggregate CHECK name",
     :required => true
 
-  option :critical,
+  option :pct_critical,
     :short => "-C PERCENT",
     :long => "--critical PERCENT",
     :description => "PERCENT non-ok before critical",
     :proc => proc {|a| a.to_i },
     :default => 80
 
-  options :num_critical,
+  option :num_critical,
     :short => '-u NUM',
     :long => '--num-critical NUM',
     :description => 'NUMBER (not percent) of non-ok before critical',
@@ -172,7 +172,7 @@ private
     message = "#{ok} OK out of #{eff_total} total."
     message << " #{silenced} silenced." if config[:silenced] && silenced > 0
     message << " #{stale.size} stale." unless stale.empty?
-    message << " #{ok_pct}% OK, #{config[:critical]}% threshold"
+    message << " #{ok_pct}% OK, #{config[:pct_critical]}% threshold"
     message << "\nStale hosts: #{stale.map{|host| host.split('.').first}.sort[0..10].join ','}" unless stale.empty?
     message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" unless failing.empty?
     message << "\nMinimum number of hosts required is #{config[:min_nodes]} and only #{ok} found" if ok < config[:min_nodes]
@@ -180,7 +180,7 @@ private
     if config[:num_critical]
       state = ok >= config[:num_critical] ? 'OK': 'CRITICAL'
     else
-      state = ok_pct >= config[:critical] ? 'OK' : 'CRITICAL'
+      state = ok_pct >= config[:pct_critical] ? 'OK' : 'CRITICAL'
     end
     state = ok >= config[:min_nodes] ? state : 'CRITICAL'
     return state, message
