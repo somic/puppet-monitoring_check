@@ -6,7 +6,7 @@ describe CheckCluster do
     { :check        => :test_check,
       :cluster_name => :test_cluster,
       :warning      => 30,
-      :critical     => 50,
+      :pct_critical => 50,
       :min_nodes    => 0 }
   end
 

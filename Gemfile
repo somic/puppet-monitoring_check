@@ -12,6 +12,7 @@ gem 'puppet-syntax'
 gem 'puppet', ENV['PUPPET_VERSION'] || '~> 3.8.0'
 gem 'vagrant-wrapper'
 gem 'rspec-puppet-utils'
+gem 'listen', '< 3.1'
 
 gem 'hiera-puppet-helper',
   :git => 'https://github.com/bobtfish/hiera-puppet-helper.git',
