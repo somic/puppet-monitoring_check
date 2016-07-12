@@ -14,12 +14,20 @@ module TinyRedis
     def initialize(redis, key, interval, logger = $stdout)
       @redis    = redis
 
-      raise "Redis connection check failed" unless "hello" == redis.echo("hello")
+      raise "Redis connection check failed" unless check_redis_connection
 
       @key      = key
       @interval = interval.to_i
       @now      = Time.now.to_i
       @logger   = logger
+    end
+
+    def check_redis_connection
+      1.upto(3) { |attempt|
+        return true if 'hello' == redis.echo('hello')
+        sleep attempt * 2
+      }
+      return false
     end
 
     def run_with_lock_or_skip
