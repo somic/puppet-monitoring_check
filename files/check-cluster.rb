@@ -260,9 +260,9 @@ class RedisCheckAggregate
   # { server_name => [timestamp, status], ... }
   def last_execution(servers)
     servers.inject({}) do |hash, server|
-      hash.merge!(
-        server => JSON.parse(@redis.get("result:#{server}:#@check")).
-                    values_at("executed", "status")) rescue []
+      values = JSON.parse(@redis.get("result:#{server}:#@check")).
+                 values_at("executed", "status") rescue []
+      hash.merge!(server => values)
     end
   end
 
