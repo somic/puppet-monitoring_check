@@ -22,9 +22,13 @@ group :test do
   gem "rspec", '< 3.2.0'
   gem "rspec-core", "3.1.7"
   gem "rspec-puppet", "~> 2.1"
+  gem "rspec-puppet-utils"
 
   gem "puppet-syntax"
   gem "puppetlabs_spec_helper"
   gem "hiera"
-  gem "hiera-puppet-helper"
+  gem 'hiera-puppet-helper',
+    :git => 'https://github.com/bobtfish/hiera-puppet-helper.git',
+    :ref => '5ed989a130bc62cc6bdb923596586284f0bd73df'
+
 end
