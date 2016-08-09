@@ -194,7 +194,12 @@ define monitoring_check (
   }
   $team_names = join(keys($team_data), '|')
   validate_re($team, "^(${team_names})$")
-  validate_bool($ticket)
+  $ticket_real = $ticket ? {
+    'true' => true,
+    'false' => false,
+    default => $ticket,
+  }
+  validate_bool($ticket_real)
   validate_array($tags)
 
   validate_array($handlers)
@@ -267,7 +272,7 @@ define monitoring_check (
     team               => $team,
     irc_channels       => $irc_channel_array,
     notification_email => $notification_email,
-    ticket             => $ticket,
+    ticket             => $ticket_real,
     project            => $project,
     page               => str2bool($page),
     tip                => $tip,
