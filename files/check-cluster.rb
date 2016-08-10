@@ -127,7 +127,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
   rescue SocketError => e
     unknown "Can't connect to Redis at #{redis.host}:#{redis.port}: #{e.message}"
   rescue NoServersFound => e
-    if ignore_nohosts
+    if config[:ignore_nohosts]
       ok "Cluster check did not find any hosts: #{e.message}"
     else
       unknown "#{e.message}"
