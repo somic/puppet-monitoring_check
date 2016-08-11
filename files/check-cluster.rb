@@ -182,7 +182,11 @@ private
     message = "#{ok} OK out of #{eff_total} total."
     message << " #{silenced} silenced." if config[:silenced] && silenced > 0
     message << " #{stale.size} stale." unless stale.empty?
-    message << " #{ok_pct}% OK, #{config[:pct_critical]}% threshold"
+    if config[:num_critical]
+      message << " #{eff_total} OK, #{failing} FAIL #{silenced} SILENT #{stale} STALE, #{config[:num_critical]} FAIL threshold"
+    else
+      message << " #{ok_pct}% OK, #{config[:pct_critical]}% threshold"
+    end
     message << "\nStale hosts: #{stale.map{|host| host.split('.').first}.sort[0..10].join ','}" unless stale.empty?
     message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" unless failing.empty?
     message << "\nMinimum number of hosts required is #{config[:min_nodes]} and only #{ok} found" if ok < config[:min_nodes]
