@@ -183,7 +183,7 @@ private
     message << " #{silenced} silenced." if config[:silenced] && silenced > 0
     message << " #{stale.size} stale." unless stale.empty?
     if config[:num_critical]
-      message << " #{eff_total} OK, #{failing} FAIL #{silenced} SILENT #{stale} STALE, #{config[:num_critical]} FAIL threshold"
+      message << " #{eff_total} OK #{failing.size} FAIL #{silenced} SILENT #{stale.size} STALE, #{config[:num_critical]} FAIL threshold: #{config[:num_critical]}"
     else
       message << " #{ok_pct}% OK, #{config[:pct_critical]}% threshold"
     end
