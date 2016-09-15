@@ -150,7 +150,7 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
     if redis.sismember('clients', sensu_client) == 1
       api_response = api_request(:Delete, "/events/#{sensu_client}/#{event_name}")
     end
-    if api_response.nil? || api_response.code =~ /20/
+    if api_response.nil? || api_response.code =~ /^20/ || api_response.code == '404'
       redis.lrem(redis_key, 1, sensu_client)
     end
   end
