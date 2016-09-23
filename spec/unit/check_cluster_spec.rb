@@ -113,23 +113,9 @@ describe CheckCluster do
   end
 
   context "payload" do
-    context "should be WARNING" do
-      it "when no old-enough aggregates" do
-        expect(check.send :check_aggregate, :total => 0, :silenced => 0).to(
-          eq(["OK", "No servers running the check"]))
-      end
-
-      it "when reached warning threshold" do
-        check.send(:check_aggregate, :ok => 60, :total => 100, :silenced => 0, :failing => ["somehosti.hostname.com", "anotherhost.example.com"], :stale => []) do |status, message|
-          expect(status).to be(1)
-          expect(message).to match(/40%/)
-        end
-      end
-    end
-
     context "should be CRITICAL" do
       it "when reached critical threshold" do
-        check.send(:check_aggregate, :ok => 40, :total => 100, :silenced => 0, :failing => ["somehosti.hostname.com", "anotherhost.example.com"], :stale => []) do |status, message|
+        check.send(:check_aggregate, :ok => 40, :total => 100, :silenced => 0, :failing => ["somehost.hostname.com", "anotherhost.example.com"], :stale => []) do |status, message|
           expect(status).to be(2)
           expect(message).to match(/60%/)
         end
