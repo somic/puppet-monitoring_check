@@ -5,7 +5,6 @@ describe CheckCluster do
   let(:config) do
     { :check        => :test_check,
       :cluster_name => :test_cluster,
-      :warning      => 30,
       :pct_critical => 50,
       :min_nodes    => 0 }
   end
