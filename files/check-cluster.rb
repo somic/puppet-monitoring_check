@@ -48,14 +48,14 @@ class CheckCluster < Sensu::Plugin::Check::CLI
   option :pct_critical,
     :short => "-C PERCENT",
     :long => "--critical PERCENT",
-    :description => "PERCENT non-ok before critical",
+    :description => "PERCENT minimum OK threshold (below this number, send alert)",
     :proc => proc {|a| a.to_i },
     :default => 80
 
   option :num_critical,
     :short => '-u NUM',
     :long => '--num-critical NUM',
-    :description => 'NUMBER (not percent) of non-ok before critical',
+    :description => 'NUMBER minimum OK threshold (below this number, send alert)',
     :proc => proc {|a| a.to_i },
     :required => false
 
