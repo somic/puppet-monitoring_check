@@ -183,9 +183,9 @@ private
     message << " #{silenced} silenced." if config[:silenced] && silenced > 0
     message << " #{stale.size} stale." unless stale.empty?
     if config[:num_critical]
-      message << " #{eff_total} OK #{failing.size} FAIL #{silenced} SILENT #{stale.size} STALE, #{config[:num_critical]} FAIL threshold: #{config[:num_critical]}"
+      message << " #{eff_total} OK, #{failing.size} FAIL, #{silenced} SILENT, #{stale.size} STALE, #{config[:num_critical]}; FAIL threshold: #{config[:num_critical]}."
     else
-      message << " #{ok_pct}% OK, #{config[:pct_critical]}% threshold"
+      message << " #{ok_pct}% OK, #{config[:pct_critical]}% threshold."
     end
     message << "\nStale hosts: #{stale.map{|host| host.split('.').first}.sort[0..10].join ','}" unless stale.empty?
     message << "\nFailing hosts: #{failing.map{|host| host.split('.').first}.sort[0..10].join ','}" unless failing.empty?
