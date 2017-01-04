@@ -3,5 +3,7 @@ require 'hiera-puppet-helper'
 require 'rspec-hiera-hotfix.rb'
 require 'rspec-puppet-utils'
 require 'simplecov'
-SimpleCov.start do
-end
+
+SimpleCov.start
+
+#enable ':should'

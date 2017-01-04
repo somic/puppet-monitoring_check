@@ -6,9 +6,11 @@ $: << File.dirname(__FILE__)
 # Check Cluster
 #
 
+require 'json'
 require 'socket'
 require 'net/http'
 require 'logger'
+require 'time'
 require 'tiny_redis'
 
 if !defined?(IN_RSPEC)
@@ -17,7 +19,6 @@ if !defined?(IN_RSPEC)
   require 'sensu/constants' # version is here
   require 'sensu/settings'
   require 'sensu-plugin/check/cli'
-  require 'json'
 end
 
 
@@ -31,6 +32,12 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :long => "--cluster-name NAME",
     :description => "Name of the cluster to use in the source of the alerts",
     :required => true
+
+  option :multi_cluster,
+    :short => "-M yes",
+    :long => "--multi-cluster yes",
+    :description => "Group by cluster_name of client/child nodes.",
+    :default => false
 
   option :min_nodes,
     :short => "-m MIN",
@@ -93,60 +100,106 @@ class CheckCluster < Sensu::Plugin::Check::CLI
       critical "Please configure interval"
       return
     end
-
-    lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
-    interval = cluster_check[:interval]
-    staleness_interval = cluster_check[:staleness_interval] || cluster_check[:interval]
-
-    if config[:dryrun]
-      status, output = check_aggregate(aggregator.summary(staleness_interval))
-      ok "Dry run cluster check successfully executed, with output: #{status}: #{output}"
-      return
-    end
-
-    mutex = TinyRedis::Mutex.new(redis, lock_key, interval, logger)
-    mutex.run_with_lock_or_skip do
-      status, output = check_aggregate(aggregator.summary(staleness_interval))
-      logger.info output
-      send_payload EXIT_CODES[status], output
-      ok "Cluster check successfully executed, with output: #{status}: #{output}"
-      return
-    end
-
-    if (ttl = mutex.ttl) && ttl >= 0
-      ok "Cluster check did not execute, lock expires in #{ttl}"
-      return
-    end
-
-    if ttl.nil?
-      ok "Cluster check did not execute, lock expired sooner than round-trip time to redis server"
-      return
-    end
-
-    critical "Cluster check did not execute, ttl: #{ttl.inspect}"
-  rescue SocketError => e
-    unknown "Can't connect to Redis at #{redis.host}:#{redis.port}: #{e.message}"
-  rescue NoServersFound => e
-    if config[:ignore_nohosts]
-      ok "Cluster check did not find any hosts: #{e.message}"
+    if config[:multi_cluster]
+      run_multi
     else
-      unknown "#{e.message}"
-    end
-  rescue RuntimeError => e
-    critical "#{e.message} (#{e.class}): #{e.backtrace.inspect}"
-  end
-
-private
-
-  def logger
-    @logger ||= Logger.new($stdout).tap do |logger|
-      logger.formatter = proc {|_, _, _, msg| msg} if logger.respond_to? :formatter=
-      logger.level = !!config[:verbose] ? Logger::DEBUG : Logger::INFO
+      run_single
     end
   end
 
   def aggregator
     RedisCheckAggregate.new(redis, config[:check], logger, config[:cluster_name])
+  end
+
+private
+ 
+  # multi_cluster is not enabled: do a single check across all nodes.
+  # Sending cluster status (is cluster ok?) is delegated.
+  # Check status (is check working?) is reported in this func.
+  def run_single
+    result = run_single_child
+    code = EXIT_CODES[result[0].to_s.upcase]
+    message = result[1]
+    method_name = EXIT_CODES.key(code).downcase
+    send(method_name, message)
+  end
+
+  # multi_cluster is enabled: do a cluster check for each child cluster.
+  # Sending cluster status (is cluster ok?) is delegated.
+  # Check status results (are checks working?) are collected and the worst ones
+  # are combined and reported.
+  def run_multi
+    results = aggregator.child_cluster_names.map do |child_cluster_name|
+      run_single_child(child_cluster_name)
+    end 
+    results_with_code = results.map do |result|
+      [EXIT_CODES[result[0].to_s.upcase], result[1]]
+    end 
+    worst_code = results_with_code.map {|result| result[0]}.max
+    message = results_with_code
+        .select{|result| result[0]==worst_code}
+        .map{|result| result[1]}
+        .uniq
+        .join(';')
+    worst_method_name = EXIT_CODES.key(worst_code).downcase
+    send(worst_method_name, message)
+  end
+
+  # Returns check status, message (is check working?), for possible aggregation.
+  # Sends cluster status payload (is the cluster ok?)
+  def run_single_child(child_cluster_name=nil)
+    lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
+    interval = cluster_check[:interval]
+    staleness_interval = cluster_check[:staleness_interval] || cluster_check[:interval]
+
+    transaction_body = lambda do 
+      status, output = check_aggregate(aggregator.summary(
+        staleness_interval, child_cluster_name))
+      msg = "Cluster check successfully executed, with output: #{status}: #{output}"
+      if config[:dryrun]
+        msg = "Dry run " + msg
+      else
+        logger.info output
+        send_payload EXIT_CODES[status], output
+      end
+      return :ok, msg
+    end 
+
+    if config[:dryrun]
+      return transaction_body.call
+    else 
+        mutex = TinyRedis::Mutex.new(redis, lock_key, interval, logger)
+        mutex.run_with_lock_or_skip do
+          return transaction_body.call
+        end
+    end
+
+    if (ttl = mutex.ttl) && ttl >= 0
+      return :ok, "Cluster check did not execute, lock expires in #{ttl}"
+    end
+
+    if ttl.nil?
+      return :ok, "Cluster check did not execute, lock expired sooner than round-trip time to redis server"
+    end
+
+    return :critical, "Cluster check did not execute, ttl: #{ttl.inspect}"
+  rescue SocketError => e
+    return :unknown, "Can't connect to Redis at #{redis.host}:#{redis.port}: #{e.message}"
+  rescue NoServersFound => e
+    if config[:ignore_nohosts]
+      return :ok, "Cluster check did not find any hosts: #{e.message}"
+    else
+     return :unknown, "#{e.message}"
+    end
+  rescue RuntimeError => e
+    return :critical, "#{e.message} (#{e.class}): #{e.backtrace.inspect}"
+  end
+  
+  def logger
+    @logger ||= Logger.new($stdout).tap do |logger|
+      logger.formatter = proc {|_, _, _, msg| msg} if logger.respond_to? :formatter=
+      logger.level = !!config[:verbose] ? Logger::DEBUG : Logger::INFO
+    end
   end
 
   def check_sensu_version
@@ -169,7 +222,6 @@ private
   #   silenced: number of *total* servers that are silenced or have
   #             target check silenced
   def check_aggregate(summary)
-    #puts "summary is #{summary}"
     total, ok, silenced, stale, failing = summary.values_at(:total, :ok, :silenced, :stale, :failing)
     return 'OK', 'No servers running the check' if total.zero?
 
@@ -240,9 +292,12 @@ class RedisCheckAggregate
     @cluster_name = cluster_name
   end
 
-  def summary(interval)
+  def summary(interval, child_cluster_name=nil)
     # we only care about entries with executed timestamp
     all     = last_execution(find_servers).select{|_,data| data[0]}
+    if child_cluster_name
+      all = all.select {|_, data| data[2]==child_cluster_name}
+    end
     active  = all.select { |_, data| data[0].to_i >= Time.now.to_i - interval }
 
     logger.debug "All #{all.length} hosts' latest result with timestamp for check #@check:\n#{all}\n\n"
@@ -269,15 +324,8 @@ class RedisCheckAggregate
       end }
   end
 
-  private
-
-  # { server_name => [timestamp, status], ... }
-  def last_execution(servers)
-    servers.inject({}) do |hash, server|
-      values = JSON.parse(@redis.get("result:#{server}:#@check")).
-                 values_at("executed", "status") rescue []
-      hash.merge!(server => values)
-    end
+  def child_cluster_names()
+    last_execution(find_servers).values.select{|data| data[0]}.map{|data| data[2]}.uniq
   end
 
   def find_servers
@@ -286,6 +334,23 @@ class RedisCheckAggregate
       keys = @redis.keys("result:*:#@check")
       raise NoServersFound.new("No servers found for #@check") if !keys || keys.empty?
       keys.map {|key| key.split(':')[1] }.reject {|s| s == @cluster_name }
+    end
+  end
+
+  # Returns { server_name => [timestamp, status, cluster_name], ... }
+  def last_execution(servers)
+    servers.inject({}) do |hash, server|
+      begin
+        jvalues = @redis.get("result:#{server}:#@check")
+        values = JSON.parse(jvalues)
+        values2 = values.values_at(
+          "executed",
+          "status",
+          "cluster_name"  # monitored cluster, not sensu cluster.
+        )
+        hash.merge!(server => values2)
+      rescue []
+      end
     end
   end
 end
