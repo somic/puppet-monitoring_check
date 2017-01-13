@@ -142,21 +142,21 @@ describe CheckCluster do
     end
 
     it "gets last execution details right" do
-        agg = check.aggregator
-        servers = ["result:10-10-10-101-dcname.dev.yelpcorp.com"]
-        le = agg.last_execution(servers)
-        expect(le.keys).to eq(
-            ["result:10-10-10-101-dcname.dev.yelpcorp.com"]
-        )
+      agg = check.aggregator
+      servers = ["result:10-10-10-101-dcname.dev.yelpcorp.com"]
+      le = agg.last_execution(servers)
+      expect(le.keys).to eq(
+          ["result:10-10-10-101-dcname.dev.yelpcorp.com"]
+      )
     end
   end
 
   context "end-to-end" do
     it "no clusters failing" do
-        expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/
-        expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/
-        expect_status :ok, /Cluster check successfully executed/
-        check.run
+      expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/
+      expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/
+      expect_status :ok, /Cluster check successfully executed/
+      check.run
     end
     context "single cluster failing" do
       let(:redis) do  # TODO(pmu) want to figure out DRY - perhaps overriding 'let' per https://github.com/rspec/rspec-core/issues/294
@@ -172,7 +172,17 @@ describe CheckCluster do
         end
       end
       it "single cluster failing" do
-        expect_payload :critical, /0 OK out of 3 total. 0% OK, 50% threshold/
+        expect_payload(
+          :critical,
+          %r{
+            Cluster:\scluster_1\n
+            0\sOK\sout\sof\s3\stotal.\s0%\sOK,\s50%\sthreshold.\n
+            Failing\shosts:\s10-10-10-101-dcname,
+                             10-10-10-111-dcname,
+                             10-10-10-121-dcname
+            $
+          }x
+        )
         expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/
         expect_status :ok, /Cluster check successfully executed/
         check.run
@@ -192,8 +202,28 @@ describe CheckCluster do
         end
       end
       it "both clusters failing" do
-        expect_payload :critical, /0 OK out of 3 total. 0% OK, 50% threshold/
-        expect_payload :critical, /0 OK out of 3 total. 0% OK, 50% threshold/
+        expect_payload(
+          :critical,
+          %r{
+            Cluster:\scluster_1\n
+            0\sOK\sout\sof\s3\stotal.\s0%\sOK,\s50%\sthreshold.\n
+            Failing\shosts:\s10-10-10-101-dcname,
+                             10-10-10-111-dcname,
+                             10-10-10-121-dcname
+            $
+          }x
+        )
+        expect_payload(
+          :critical,
+          %r{
+            Cluster:\scluster_2\n
+            0\sOK\sout\sof\s3\stotal.\s0%\sOK,\s50%\sthreshold.\n
+            Failing\shosts:\s10-10-10-102-dcname,
+                             10-10-10-112-dcname,
+                             10-10-10-122-dcname
+            $
+          }x
+        )
         expect_status :ok, /Cluster check successfully executed/
         check.run
       end
