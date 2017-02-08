@@ -352,7 +352,8 @@ class RedisCheckAggregate
           "cluster_name"  # monitored cluster, not sensu cluster.
         )
         hash.merge!(server => values2)
-      rescue []
+      rescue
+        []
       end
     end
   end
