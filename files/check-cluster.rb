@@ -108,7 +108,8 @@ class CheckCluster < Sensu::Plugin::Check::CLI
   end
 
   def aggregator
-    RedisCheckAggregate.new(redis, config[:check], logger, config[:cluster_name])
+    raise_no_server_found = !(config[:multi_cluster] and config[:ignore_nohosts])
+    RedisCheckAggregate.new( redis, config[:check], logger, config[:cluster_name], raise_no_server_found)
   end
 
 private
@@ -132,17 +133,21 @@ private
     results = aggregator.child_cluster_names.map do |child_cluster_name|
       run_single_child(child_cluster_name)
     end 
-    results_with_code = results.map do |result|
-      [EXIT_CODES[result[0].to_s.upcase], result[1]]
-    end 
-    worst_code = results_with_code.map {|result| result[0]}.max
-    message = results_with_code
-        .select{|result| result[0]==worst_code}
-        .map{|result| result[1]}
-        .uniq
-        .join(';')
-    worst_method_name = EXIT_CODES.key(worst_code).downcase
-    send(worst_method_name, message)
+    if results.empty?
+      send('ok', 'No child clusters found in this sensu cluster.')
+    else
+      results_with_code = results.map do |result|
+        [EXIT_CODES[result[0].to_s.upcase], result[1]]
+      end 
+      worst_code = results_with_code.map {|result| result[0]}.max
+      message = results_with_code
+          .select{|result| result[0]==worst_code}
+          .map{|result| result[1]}
+          .uniq
+          .join(';')
+      worst_method_name = EXIT_CODES.key(worst_code).downcase
+      send(worst_method_name, message)
+    end
   end
 
   # Returns check status, message (is check working?), for possible aggregation.
@@ -288,11 +293,12 @@ end
 class RedisCheckAggregate
   attr_accessor :logger
 
-  def initialize(redis, check, logger, cluster_name)
+  def initialize(redis, check, logger, cluster_name, raise_no_server_found)
     @check  = check
     @redis  = redis
     @logger = logger
     @cluster_name = cluster_name
+    @raise_no_server_found = raise_no_server_found
   end
 
   def summary(interval, child_cluster_name=nil)
@@ -335,7 +341,8 @@ class RedisCheckAggregate
     # TODO: reimplement using @redis.scan for webscale
     @servers ||= begin
       keys = @redis.keys("result:*:#@check")
-      raise NoServersFound.new("No servers found for #@check") if !keys || keys.empty?
+      keys = @redis.keys("result:*:#@check") || []
+      raise NoServersFound if @raise_no_server_found && keys.empty?
       keys.map {|key| key.split(':')[1] }.reject {|s| s == @cluster_name }
     end
   end
