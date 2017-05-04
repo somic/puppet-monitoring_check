@@ -130,10 +130,11 @@ describe CheckCluster do
     expect(check).to receive(code).with(message)
   end
 
-  def expect_payload(code, message)
+  def expect_payload(code, message, child_cluster_name)
     expect(check).to receive(:send_payload).with(
       Sensu::Plugin::EXIT_CODES[code.to_s.upcase],
-      message
+      message,
+      child_cluster_name
     ).and_return(nil)
   end
 
@@ -183,8 +184,8 @@ describe CheckCluster do
         end
     end
     it "no clusters failing" do
-      expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/
-      expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/
+      expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/, 'cluster_1'
+      expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/, 'cluster_2'
       expect_status :ok, /Cluster check successfully executed/
       check.run
     end
@@ -211,9 +212,10 @@ describe CheckCluster do
                              10-10-10-111-dcname,
                              10-10-10-121-dcname
             $
-          }x
+          }x,
+          'cluster_1'
         )
-        expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/
+        expect_payload :ok, /3 OK out of 3 total. 100% OK, 50% threshold/, 'cluster_2'
         expect_status :ok, /Cluster check successfully executed/
         check.run
       end
@@ -241,7 +243,8 @@ describe CheckCluster do
                              10-10-10-111-dcname,
                              10-10-10-121-dcname
             $
-          }x
+          }x,
+          'cluster_1'
         )
         expect_payload(
           :critical,
@@ -252,7 +255,8 @@ describe CheckCluster do
                              10-10-10-112-dcname,
                              10-10-10-122-dcname
             $
-          }x
+          }x,
+          'cluster_2'
         )
         expect_status :ok, /Cluster check successfully executed/
         check.run

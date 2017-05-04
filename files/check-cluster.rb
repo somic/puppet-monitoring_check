@@ -168,7 +168,7 @@ private
         msg = "Dry run " + msg
       else
         logger.info output
-        send_payload EXIT_CODES[status], output
+        send_payload EXIT_CODES[status], output, child_cluster_name
       end
       return :ok, msg
     end 
@@ -266,11 +266,16 @@ private
       raise "Sensu settings not available"
   end
 
-  def send_payload(status, output)
+  def send_payload(status, output, child_cluster_name)
+    if child_cluster_name
+        source = config[:cluster_name] + '_' + child_cluster_name
+    else
+        source = config[:cluster_name]
+    end
     payload = cluster_check.merge(
       :status => status,
       :output => output,
-      :source => config[:cluster_name],
+      :source => source,
       :name   => config[:check])
     payload.delete :command
 

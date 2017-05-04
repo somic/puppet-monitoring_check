@@ -60,7 +60,10 @@ describe CheckCluster do
 
   def expect_payload(code, message)
     expect(check).to receive(:send_payload).with(
-      Sensu::Plugin::EXIT_CODES[code.to_s.upcase], message).and_return(nil)
+      Sensu::Plugin::EXIT_CODES[code.to_s.upcase],
+      message,
+      nil
+    ).and_return(nil)
   end
 
   context "status" do
