@@ -124,6 +124,9 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
       new_event[k.to_s] = check[k.to_s]
     end
 
+    # take irc_channels from team data
+    new_event.delete('irc_channels') if check['with_team_data_irc_channels']
+
     if check['with_keepalive_team']
       team_override = get_client_keepalive_team(event[:sensu_client_name])
       new_event['team'] = team_override if team_override
