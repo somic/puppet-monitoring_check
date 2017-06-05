@@ -7,9 +7,8 @@ unless defined?(IN_RSPEC)
   require 'sensu-plugin/utils'
   require 'sensu-plugin/check/cli'
 end
-require 'tiny_redis'
-require 'socket'
 require 'json'
+require 'net/https'
 
 class CheckRemoteSensu < Sensu::Plugin::Check::CLI
 
@@ -25,61 +24,54 @@ class CheckRemoteSensu < Sensu::Plugin::Check::CLI
   option :filter,
     :short       => '-f filter',
     :long        => '--filter filter',
-    :description => 'filter hosts to analyze',
+    :description => 'filter clients to analyze',
     :required    => true
 
-  option :redis_host,
+  option :remote_sensu,
     :short       => '-h host',
-    :long        => '--redis-host host',
-    :description => 'redis host to use',
+    :long        => '--remote-sensu host',
+    :description => 'remote sensu server to use',
     :required    => true
 
-  attr_accessor :good, :bad, :undefined
+  attr_reader :bad
 
   def run
-    @good = []
-    @bad = []
-    @undefined = []
+    find_triggered_events
 
-    redis.keys("result:*:#{config[:event]}").each do |key|
-      _, host, _ = key.split(/:/)
-      next unless redis.get("client:#{host}").include?(config[:filter])
-      check_result = JSON.parse(redis.get(key)) rescue nil
-      case check_result['status']
-        when 0
-          good << host
-        when 2
-          bad << host
-        else
-          undefined << host
-      end
+    if bad.empty?
+      ok "Remote sensu #{config[:remote_sensu]} has 0 triggered #{config[:event]} events for clients that match '#{config[:filter]}'."
+    else
+      critical "Remote sensu #{config[:remote_sensu]} has #{bad.size} triggered #{config[:event]} events for clients that match '#{config[:filter]}': #{bad.inspect}"
     end
-
-    unknown("No check results were found. #{message}") if (bad + good + undefined).empty?
-
-    bad.empty? ? ok(message) : critical(message)
-  end
-
-  def redis
-    @redis ||= TinyRedis::Client.new(host=config[:redis_host],
-                                     port=settings['redis']['port'])
-    @redis.ping
-    @redis
   rescue => e
-    raise "Unable to connect to remote redis at #{config[:redis_host]} : #{e.message}"
+    unknown "Failed to connect to remote sensu #{config[:remote_sensu]} - #{e}"
   end
 
-  def message
-    m = ""
-    m += message_part(bad, :critical) unless bad.empty?
-    m += message_part(good, :ok) unless good.empty?
-    m += message_part(undefined, :unknown) unless undefined.empty?
-    m += " Host filter applied during search: '#{config[:filter]}'."
-    m.gsub(/\s+/, ' ')
+  def find_triggered_events
+    @bad = Array.new
+    events = JSON.parse(api_request(:Get, '/events').body)
+    events.each do |ev|
+      next unless ev['check']['name'] == config[:event]
+      next unless ev['client'].to_s.include? config[:filter]
+      @bad << ev['client']['name']
+    end
+    @bad
   end
 
-  def message_part(list, status_string)
-    "#{config[:event]} is #{status_string} on these hosts: #{list.join(', ')}. "
+  def api_request(method, path)
+    raise "api.json settings not found." unless settings.has_key?('api')
+    open_timeout = settings['api'].fetch('open_timeout', 10),
+    read_timeout = settings['api'].fetch('read_timeout', 10)
+    Net::HTTP.start(config[:remote_sensu], settings['api']['port'],
+                    :read_timeout => read_timeout) do |http|
+      http.open_timeout = open_timeout
+      req = Net::HTTP.const_get(method).new(path)
+      if settings['api']['user'] && settings['api']['password']
+        req.basic_auth(settings['api']['user'], settings['api']['password'])
+      end
+      req = yield(req) if block_given?
+      http.request(req)
+    end
   end
 
 end
