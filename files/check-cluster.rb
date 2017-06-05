@@ -365,7 +365,7 @@ class RedisCheckAggregate
         )
         hash.merge!(server => values2)
       rescue
-        []
+        {}
       end
     end
   end
