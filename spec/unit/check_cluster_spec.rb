@@ -160,4 +160,37 @@ describe CheckCluster do
     expect_payload :ok, /0%/
     check.run
   end
+
+  context 'RedisCheckAggregate' do
+    let(:redis1) do
+      double(:redis1).tap do |redis1|
+        redis1.stub(:get).with('result:a:foo').and_return(
+          {'executed' => 1, 'status' => 0, 'cluster_name' => 'baz' }.to_json
+        )
+        redis1.stub(:get).with('result:b:foo').and_return(
+          {'executed' => 1, 'status' => 2, 'cluster_name' => 'qux' }.to_json
+        )
+        redis1.stub(:get).with('result:c:foo').and_return(
+          'this is not json, parsing this will raise an exception'
+        )
+      end
+    end
+    let(:redis_check_aggregate) {
+      RedisCheckAggregate.new(redis1, 'foo', logger, 'bar_cluster', false)
+    }
+
+    it 'last_execution should return empty hash when no servers' do
+      expect(redis_check_aggregate.last_execution([])).to eq({})
+    end
+    it 'last_execution should work' do
+      expect(redis_check_aggregate.last_execution(['a','b'])).to eq(
+        {"a"=>[1, 0, "baz"], "b"=>[1, 2, "qux"]}
+      )
+    end
+    it 'last_execution should correctly handle exceptions' do
+      expect(redis_check_aggregate.last_execution(['a', 'c'])).to eq(
+        {"a"=>[1, 0, "baz"]}
+      )
+    end
+  end
 end

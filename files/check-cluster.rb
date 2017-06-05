@@ -345,7 +345,6 @@ class RedisCheckAggregate
   def find_servers
     # TODO: reimplement using @redis.scan for webscale
     @servers ||= begin
-      keys = @redis.keys("result:*:#@check")
       keys = @redis.keys("result:*:#@check") || []
       raise NoServersFound if @raise_no_server_found && keys.empty?
       keys.map {|key| key.split(':')[1] }.reject {|s| s == @cluster_name }
@@ -365,7 +364,7 @@ class RedisCheckAggregate
         )
         hash.merge!(server => values2)
       rescue
-        []
+        hash
       end
     end
   end
