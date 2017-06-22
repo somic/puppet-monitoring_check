@@ -33,6 +33,13 @@ class CheckRemoteSensu < Sensu::Plugin::Check::CLI
     :description => 'remote sensu server to use',
     :required    => true
 
+  option :json,
+    :short       => '-j',
+    :long        => '--json',
+    :boolean     => true,
+    :description => 'json output for critical alert, false by default',
+    :default     => false
+
   attr_reader :bad
 
   def run
@@ -41,7 +48,16 @@ class CheckRemoteSensu < Sensu::Plugin::Check::CLI
     if bad.empty?
       ok "Remote sensu #{config[:remote_sensu]} has 0 triggered #{config[:event]} events for clients that match '#{config[:filter]}'."
     else
-      critical "Remote sensu #{config[:remote_sensu]} has #{bad.size} triggered #{config[:event]} events for clients that match '#{config[:filter]}': #{bad.inspect}"
+      if config[:json]
+        critical({
+          :remote_sensu  => config[:remote_sensu],
+          :filter        => config[:filter],
+          :event         => config[:event],
+          :critical      => bad,
+        }.to_json)
+      else
+        critical "Remote sensu #{config[:remote_sensu]} has #{bad.size} triggered #{config[:event]} events for clients that match '#{config[:filter]}': #{bad.inspect}"
+      end
     end
   rescue => e
     unknown "Failed to connect to remote sensu #{config[:remote_sensu]} - #{e}"
