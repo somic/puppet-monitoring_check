@@ -228,18 +228,20 @@ define monitoring_check (
     $irc_channel_array = $team_hash[$team]['notifications_irc_channel']
   }
 
-  if $remediation_action != undef {
-    include monitoring_check::remediation
+  if str2bool($use_sensu) {
+    if $remediation_action != undef {
+      include monitoring_check::remediation
 
-    validate_re($remediation_action, '^/.*', "Your command, ${remediation_action}, must use a full path")
-    validate_integer($remediation_retries)
+      validate_re($remediation_action, '^/.*', "Your command, ${remediation_action}, must use a full path")
+      validate_integer($remediation_retries)
 
-    $safe_command = shell_escape($command)
-    $safe_remediation_action = shell_escape($remediation_action)
+      $safe_command = shell_escape($command)
+      $safe_remediation_action = shell_escape($remediation_action)
 
-    $sudo_command = "${monitoring_check::params::etc_dir}/plugins/remediation.sh -n \"${name}\" -c ${safe_command} -a ${safe_remediation_action} -r ${remediation_retries}"
-  } else {
-    $sudo_command = $command
+      $sudo_command = "${monitoring_check::params::etc_dir}/plugins/remediation.sh -n \"${name}\" -c ${safe_command} -a ${safe_remediation_action} -r ${remediation_retries}"
+    } else {
+      $sudo_command = $command
+    }
   }
 
   if str2bool($needs_sudo) {
