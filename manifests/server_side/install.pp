@@ -25,4 +25,11 @@ class monitoring_check::server_side::install (
     mode   => '0555',
     source => 'puppet:///modules/monitoring_check/check_remote_sensu.rb',
   }
+
+  file { '/etc/sensu/plugins/sensu_api_util.rb':
+    owner  => 'sensu',
+    group  => 'sensu',
+    mode   => '0444',
+    source => 'puppet:///modules/monitoring_check/sensu_api_util.rb',
+  }
 }
