@@ -113,12 +113,12 @@ class CheckCluster < Sensu::Plugin::Check::CLI
   end
 
 private
- 
+
   # multi_cluster is not enabled: do a single check across all nodes.
   # Sending cluster status (is cluster ok?) is delegated.
   # Check status (is check working?) is reported in this func.
   def run_single
-    result = run_single_child
+    result = enclose_in_redis_transaction { run_single_child }
     code = EXIT_CODES[result[0].to_s.upcase]
     message = result[1]
     method_name = EXIT_CODES.key(code).downcase
@@ -130,15 +130,17 @@ private
   # Check status results (are checks working?) are collected and the worst ones
   # are combined and reported.
   def run_multi
-    results = aggregator.child_cluster_names.map do |child_cluster_name|
-      run_single_child(child_cluster_name)
-    end 
+    results = enclose_in_redis_transaction do
+      aggregator.child_cluster_names.map do |child_cluster_name|
+        run_single_child(child_cluster_name)
+      end
+    end
     if results.empty?
       send('ok', 'No child clusters found in this sensu cluster.')
     else
       results_with_code = results.map do |result|
         [EXIT_CODES[result[0].to_s.upcase], result[1]]
-      end 
+      end
       worst_code = results_with_code.map {|result| result[0]}.max
       message = results_with_code
           .select{|result| result[0]==worst_code}
@@ -148,38 +150,21 @@ private
       worst_method_name = EXIT_CODES.key(worst_code).downcase
       send(worst_method_name, message)
     end
+  rescue NoServersFound => e
+    send :unknown, "#{e.message}"
   end
 
-  # Returns check status, message (is check working?), for possible aggregation.
-  # Sends cluster status payload (is the cluster ok?)
-  def run_single_child(child_cluster_name=nil)
-    lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
+  # Executes the passed block within a redis mutex transaction if not dryrun
+  def enclose_in_redis_transaction
     interval = cluster_check[:interval]
-    staleness_interval = cluster_check[:staleness_interval] || cluster_check[:interval]
-
-    transaction_body = lambda do 
-      status, output = check_aggregate(aggregator.summary(
-        staleness_interval, child_cluster_name))
-      if child_cluster_name
-        output = "Cluster: #{child_cluster_name}\n" + output
-      end
-      msg = "Cluster check successfully executed, with output: #{status}: #{output}"
-      if config[:dryrun]
-        msg = "Dry run " + msg
-      else
-        logger.info output
-        send_payload EXIT_CODES[status], output, child_cluster_name
-      end
-      return :ok, msg
-    end 
-
     if config[:dryrun]
-      return transaction_body.call
-    else 
-        mutex = TinyRedis::Mutex.new(redis, lock_key, interval, logger)
-        mutex.run_with_lock_or_skip do
-          return transaction_body.call
-        end
+      return yield
+    else
+      lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
+      mutex = TinyRedis::Mutex.new(redis, lock_key, interval, logger)
+      mutex.run_with_lock_or_skip do
+        return yield
+      end
     end
 
     if (ttl = mutex.ttl) && ttl >= 0
@@ -197,12 +182,34 @@ private
     if config[:ignore_nohosts]
       return :ok, "Cluster check did not find any hosts: #{e.message}"
     else
-     return :unknown, "#{e.message}"
+      raise
     end
   rescue RuntimeError => e
     return :critical, "#{e.message} (#{e.class}): #{e.backtrace.inspect}"
   end
-  
+
+  # Returns check status, message (is check working?), for possible aggregation.
+  # Sends cluster status payload (is the cluster ok?)
+  def run_single_child(child_cluster_name=nil)
+    lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
+    staleness_interval = cluster_check[:staleness_interval] || cluster_check[:interval]
+
+    status, output = check_aggregate(aggregator.summary(
+      staleness_interval, child_cluster_name))
+
+    if child_cluster_name
+      output = "Cluster: #{child_cluster_name}\n" + output
+    end
+    msg = "Cluster check successfully executed, with output: #{status}: #{output}"
+    if config[:dryrun]
+      msg = "Dry run " + msg
+    else
+      logger.info output
+      send_payload EXIT_CODES[status], output, child_cluster_name
+    end
+    return :ok, msg
+  end
+
   def logger
     @logger ||= Logger.new($stdout).tap do |logger|
       logger.formatter = proc {|_, _, _, msg| msg} if logger.respond_to? :formatter=
@@ -339,7 +346,7 @@ class RedisCheckAggregate
   end
 
   def child_cluster_names()
-     last_execution(find_servers).values.map{|(time,_,name)| name if time && name && !name.empty?}.compact.uniq
+    last_execution(find_servers).values.map{|(time,_,name)| name if time && name && !name.empty?}.compact.uniq
   end
 
   def find_servers
