@@ -75,6 +75,12 @@ module TinyRedis
 
     def socket
       @socket ||= TCPSocket.new(@host, @port)
+    rescue SocketError => e
+      @socket_error_counter ||= 1
+      raise(e) if @socket_error_counter > 5
+      sleep 0.3 * @socket_error_counter
+      @socket_error_counter += 1
+      retry
     end
 
     def method_missing(method, *args)
