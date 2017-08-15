@@ -25,7 +25,7 @@ class CheckRemoteSensu < Sensu::Plugin::Check::CLI
     :short       => '-f filter',
     :long        => '--filter filter',
     :description => 'filter clients to analyze',
-    :required    => true
+    :default    => ''
 
   option :remote_sensu,
     :short       => '-h host',
