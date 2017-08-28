@@ -24,7 +24,7 @@ module TinyRedis
 
     def check_redis_connection
       1.upto(3) { |attempt|
-        return true if 'hello' == redis.echo('hello')
+        return true if ('hello' == redis.echo('hello') rescue false)
         sleep attempt * 2
       }
       return false
