@@ -9,11 +9,13 @@ unless defined?(IN_RSPEC)
 end
 require 'json'
 require 'net/https'
+require 'sensu_api_util'
 
 class CheckRemoteSensu < Sensu::Plugin::Check::CLI
 
   # let's get all sensu settings
   include Sensu::Plugin::Utils
+  include SensuAPIUtil
 
   option :event,
     :short       => '-e event',
@@ -40,6 +42,13 @@ class CheckRemoteSensu < Sensu::Plugin::Check::CLI
     :description => 'json output for critical alert, false by default',
     :default     => false
 
+  option :preserve_output,
+    :short       => '-p',
+    :long        => '--preserve-output',
+    :boolean     => true,
+    :description => 'use output from remote events that we found',
+    :default     => false
+
   attr_reader :bad
 
   def run
@@ -48,13 +57,16 @@ class CheckRemoteSensu < Sensu::Plugin::Check::CLI
     if bad.empty?
       ok "Remote sensu #{config[:remote_sensu]} has 0 triggered #{config[:event]} events for clients that match '#{config[:filter]}'."
     else
-      if config[:json]
-        critical({
+      if config[:preserve_output]
+        critical("#{config[:event]} " + @bad_outputs.join('.'))
+      elsif config[:json]
+        puts({
           :remote_sensu  => config[:remote_sensu],
           :filter        => config[:filter],
           :event         => config[:event],
           :critical      => bad,
         }.to_json)
+        exit 2
       else
         critical "Remote sensu #{config[:remote_sensu]} has #{bad.size} triggered #{config[:event]} events for clients that match '#{config[:filter]}': #{bad.inspect}"
       end
@@ -65,29 +77,15 @@ class CheckRemoteSensu < Sensu::Plugin::Check::CLI
 
   def find_triggered_events
     @bad = Array.new
-    events = JSON.parse(api_request(:Get, '/events').body)
+    @bad_outputs = Array.new
+    events = json_parse_api_request(config[:remote_sensu], :Get, '/events')
     events.each do |ev|
       next unless ev['check']['name'] == config[:event]
       next unless ev['client'].to_s.include? config[:filter]
       @bad << ev['client']['name']
+      @bad_outputs << ev['check']['output'].to_s
     end
     @bad
-  end
-
-  def api_request(method, path)
-    raise "api.json settings not found." unless settings.has_key?('api')
-    open_timeout = settings['api'].fetch('open_timeout', 10),
-    read_timeout = settings['api'].fetch('read_timeout', 10)
-    Net::HTTP.start(config[:remote_sensu], settings['api']['port'],
-                    :read_timeout => read_timeout) do |http|
-      http.open_timeout = open_timeout
-      req = Net::HTTP.const_get(method).new(path)
-      if settings['api']['user'] && settings['api']['password']
-        req.basic_auth(settings['api']['user'], settings['api']['password'])
-      end
-      req = yield(req) if block_given?
-      http.request(req)
-    end
   end
 
 end
