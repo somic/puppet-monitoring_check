@@ -172,8 +172,9 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
   end
 
   def redis
-    @redis ||= TinyRedis::Client.new(host=settings['redis']['host'],
-                                     port=settings['redis']['port'])
+    @redis ||= TinyRedis::Client.new(
+      host=settings['redis']['host'],
+      port=settings['redis']['port']) rescue unknown('Failed to connect to redis')
   end
 
   def redis_key

@@ -66,8 +66,9 @@ class CheckServerSide < Sensu::Plugin::Check::CLI
   def redis
     # settings will include redis server information on sensu servers but
     # not on sensu clients
-    @redis ||= TinyRedis::Client.new(host=settings['redis']['host'],
-                                     port=settings['redis']['port'])
+    @redis ||= TinyRedis::Client.new(
+      host=settings['redis']['host'],
+      port=settings['redis']['port']) rescue unknown('Failed to connect to redis')
   end
 
   def distributed_mutex
