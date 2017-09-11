@@ -107,7 +107,9 @@ describe CheckCluster do
     context "should be UNKNOWN" do
       it "when SocketError happens" do
         expect(TinyRedis::Mutex).to receive(:new).and_raise SocketError
-        expect_status :unknown, /127.0.0.1:7777: SocketError$/
+        expect(nil).to receive(:run_with_lock_or_skip).and_return(true)
+        expect(nil).to receive(:ttl).and_return(1)
+        expect_status :unknown, /^Failed to connect to redis$/
         check.run
       end
 
