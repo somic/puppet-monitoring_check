@@ -17,6 +17,7 @@ module Sensu
     class Check
       class CLI
         def self.method_missing(*args); end
+        def method_missing(*args); end
       end
     end
 

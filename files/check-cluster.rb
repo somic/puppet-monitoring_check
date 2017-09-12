@@ -167,7 +167,7 @@ private
       return yield
     else
       lock_key = "lock:#{config[:cluster_name]}:#{config[:check]}"
-      mutex = TinyRedis::Mutex.new(redis, lock_key, interval, logger)
+      mutex = TinyRedis::Mutex.new(redis, lock_key, interval, logger) rescue unknown('Failed to connect to redis')
       mutex.run_with_lock_or_skip do
         return yield
       end
