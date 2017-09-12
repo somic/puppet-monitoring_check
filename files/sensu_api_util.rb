@@ -13,7 +13,7 @@ module SensuAPIUtil
     end
     raise 'api.json settings not found.' unless settings.has_key?('api')
 
-    open_timeout = settings['api'].fetch('open_timeout', 10),
+    open_timeout = settings['api'].fetch('open_timeout', 10)
     read_timeout = settings['api'].fetch('read_timeout', 10)
     Net::HTTP.start(host, settings['api']['port'],
                     :read_timeout => read_timeout) do |http|
