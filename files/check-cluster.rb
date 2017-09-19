@@ -69,7 +69,7 @@ class CheckCluster < Sensu::Plugin::Check::CLI
   option :silenced,
     :short => "-S yes",
     :long => "--silenced yes",
-    :description => "Include silenced hosts in total",
+    :description => "Exclude silenced hosts from total",
     :default => false
 
   option :ignore_nohosts,
