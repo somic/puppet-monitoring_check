@@ -138,6 +138,14 @@
 # A hash the determines if and when a check should be silenced for a peroid of time,
 # such as within working hours.
 #
+# [*description*]
+# String that gives more context on this check. This could include information on what
+# the check means or why was it created. This is optional.
+#
+# [*component*]
+# A list of component(s) affected by this check. This could include the service that is
+# affected or a module of that service such as healthcheck.
+#
 # This, by default allows you to set the $::override_sensu_checks_to fact
 # in /etc/facter/facts.d to stop checks on a single machine from alerting via the
 # normal mechanism. Setting this to false will stop this mechanism from applying
@@ -176,6 +184,8 @@ define monitoring_check (
   $can_override          = true,
   $tags                  = [],
   $subdue                = undef,
+  $description           = undef,
+  $component             = undef,
 ) {
 
   include monitoring_check::params
@@ -226,6 +236,10 @@ define monitoring_check (
   } else {
     $team_hash = $team_data
     $irc_channel_array = $team_hash[$team]['notifications_irc_channel']
+  }
+
+  if $component != undef {
+    $component = any2array($component)
   }
 
   if str2bool($use_sensu) and $remediation_action != undef {
@@ -295,6 +309,8 @@ define monitoring_check (
       custom              => $custom,
       source              => $source,
       subdue              => $subdue,
+      description         => $description,
+      component           => $component,
     })
     # quotes around $name are needed to ensure its value comes from monitoring_check
     create_resources('sensu::check', { "${name}" => $sensu_check_params })
