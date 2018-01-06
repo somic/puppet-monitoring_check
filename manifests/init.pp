@@ -238,10 +238,6 @@ define monitoring_check (
     $irc_channel_array = $team_hash[$team]['notifications_irc_channel']
   }
 
-  if $component != undef {
-    $component = any2array($component)
-  }
-
   if str2bool($use_sensu) and $remediation_action != undef {
       include monitoring_check::remediation
 
@@ -284,6 +280,18 @@ define monitoring_check (
     habitat            => $::habitat,
     tags               => $tags,
   }
+
+
+  if $component != undef {
+    $component = any2array($component)
+    $base_dict['component'] = $component
+  }
+
+  if $description != undef {
+    validate_string($description)
+    $base_dict['description'] = $description
+  }
+
   if getvar('::override_sensu_checks_to') and $can_override {
     $with_override = merge($base_dict, {
       'team'             => 'noop',
@@ -309,8 +317,6 @@ define monitoring_check (
       custom              => $custom,
       source              => $source,
       subdue              => $subdue,
-      description         => $description,
-      component           => $component,
     })
     # quotes around $name are needed to ensure its value comes from monitoring_check
     create_resources('sensu::check', { "${name}" => $sensu_check_params })
