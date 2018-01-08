@@ -184,8 +184,8 @@ define monitoring_check (
   $can_override          = true,
   $tags                  = [],
   $subdue                = undef,
-  $description           = undef,
-  $component             = undef,
+  $description           = false,
+  $component             = false,
 ) {
 
   include monitoring_check::params
@@ -282,12 +282,12 @@ define monitoring_check (
   }
 
 
-  if $component != undef {
+  if $component {
     $component = any2array($component)
     $base_dict['component'] = $component
   }
 
-  if $description != undef {
+  if $description {
     validate_string($description)
     $base_dict['description'] = $description
   }
