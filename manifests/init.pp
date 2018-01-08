@@ -138,6 +138,14 @@
 # A hash the determines if and when a check should be silenced for a peroid of time,
 # such as within working hours.
 #
+# [*description*]
+# String that gives more context on this check. This could include information on what
+# the check means or why was it created. This is optional.
+#
+# [*component*]
+# A list of component(s) affected by this check. This could include the service that is
+# affected or a module of that service such as healthcheck.
+#
 # This, by default allows you to set the $::override_sensu_checks_to fact
 # in /etc/facter/facts.d to stop checks on a single machine from alerting via the
 # normal mechanism. Setting this to false will stop this mechanism from applying
@@ -176,6 +184,8 @@ define monitoring_check (
   $can_override          = true,
   $tags                  = [],
   $subdue                = undef,
+  $description           = false,
+  $component             = false,
 ) {
 
   include monitoring_check::params
@@ -270,6 +280,18 @@ define monitoring_check (
     habitat            => $::habitat,
     tags               => $tags,
   }
+
+
+  if $component {
+    $component = any2array($component)
+    $base_dict['component'] = $component
+  }
+
+  if $description {
+    validate_string($description)
+    $base_dict['description'] = $description
+  }
+
   if getvar('::override_sensu_checks_to') and $can_override {
     $with_override = merge($base_dict, {
       'team'             => 'noop',
