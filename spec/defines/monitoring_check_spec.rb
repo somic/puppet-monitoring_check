@@ -59,6 +59,65 @@ describe 'monitoring_check' do
       it { should contain_file('/etc/sensu/team_data.json').with_content(/operations/) }
     end
 
+    context "with description and component" do
+      let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => true, :description => 'foo', :component => ['foo', 'bar']} }
+
+      it do
+        should contain_sensu__check('examplecheck') \
+          .with_ensure('present') \
+          .with_handlers('default') \
+          .with_interval(default_interval) \
+          .without_subdue \
+          .with_command('bar') \
+          .with_custom({
+            "alert_after"        => "0",
+            "realert_every"      => "-1",
+            "runbook"            => "http://gronk",
+            "sla"                => "No SLA defined.",
+            "team"               => "operations",
+            "irc_channels"       => :undef,
+            "notification_email" => "undef",
+            "ticket"             => false,
+            "project"            => false,
+            "page"               => true,
+            "tip"                => false,
+            "habitat"            => "somehabitat",
+            "tags"               => [],
+            "description"        => "foo",
+            "component"          => ["foo", "bar"]
+          })
+      end
+    end
+
+    context "with description and no component" do
+      let(:params) { {:command => 'bar', :runbook => 'http://gronk', :page => true, :description => 'foo'} }
+
+      it do
+        should contain_sensu__check('examplecheck') \
+          .with_ensure('present') \
+          .with_handlers('default') \
+          .with_interval(default_interval) \
+          .without_subdue \
+          .with_command('bar') \
+          .with_custom({
+            "alert_after"        => "0",
+            "realert_every"      => "-1",
+            "runbook"            => "http://gronk",
+            "sla"                => "No SLA defined.",
+            "team"               => "operations",
+            "irc_channels"       => :undef,
+            "notification_email" => "undef",
+            "ticket"             => false,
+            "project"            => false,
+            "page"               => true,
+            "tip"                => false,
+            "habitat"            => "somehabitat",
+            "tags"               => [],
+            "description"        => "foo",
+          })
+      end
+    end
+
     context "no handlers" do
       let(:params) { {:command => 'bar', :runbook => 'http://gronk', :handlers => []} }
       it do

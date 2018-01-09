@@ -281,24 +281,27 @@ define monitoring_check (
     tags               => $tags,
   }
 
-
   if $component {
-    $component = any2array($component)
-    $base_dict['component'] = $component
+    $component_array = any2array($component)
+    $with_component = merge($base_dict, {'component' =>  $component_array})
+  } else {
+    $with_component = $base_dict
   }
 
   if $description {
     validate_string($description)
-    $base_dict['description'] = $description
+    $with_description = merge($with_component, {'description' => $description})
+  } else {
+    $with_description = $with_component
   }
 
   if getvar('::override_sensu_checks_to') and $can_override {
-    $with_override = merge($base_dict, {
+    $with_override = merge($with_description, {
       'team'             => 'noop',
       notification_email => $::override_sensu_checks_to,
     })
   } else {
-    $with_override = $base_dict
+    $with_override = $with_description
   }
   $custom = merge($with_override, $sensu_custom)
 
