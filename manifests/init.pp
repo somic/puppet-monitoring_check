@@ -281,15 +281,18 @@ define monitoring_check (
     tags               => $tags,
   }
 
-
   if $component {
-    $component = any2array($component)
-    $base_dict['component'] = $component
+    $component_array = any2array($component)
+    $component_hash = {'component' =>  $component_array}
+  } else {
+    $component_hash = {}
   }
 
   if $description {
     validate_string($description)
-    $base_dict['description'] = $description
+    $description_hash = {'description' => $description}
+  } else {
+    $description_hash = {}
   }
 
   if getvar('::override_sensu_checks_to') and $can_override {
@@ -300,7 +303,7 @@ define monitoring_check (
   } else {
     $with_override = $base_dict
   }
-  $custom = merge($with_override, $sensu_custom)
+  $custom = merge($with_override, $description_hash, $component_hash, $sensu_custom)
 
   if str2bool($use_sensu) {
     if !defined(Class['sensu']) {
