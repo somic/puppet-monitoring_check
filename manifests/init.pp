@@ -301,7 +301,7 @@ define monitoring_check (
       notification_email => $::override_sensu_checks_to,
     })
   } else {
-    $with_override = $with_description
+    $with_override = $base_dict
   }
   $custom = merge($with_override, $description_hash, $component_hash, $sensu_custom)
 
