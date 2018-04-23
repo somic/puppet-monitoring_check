@@ -58,6 +58,12 @@
 # if other teams are interested in your notifications. Set to [] if you need
 # no IRC notifcations. (like, motd only or page only)
 # Defaults to nil, which uses ${team}-notifications default from the irc handler.
+
+# [*slack_channels*]
+# Array of Slack channels to send notfications to. Set this to multiple channels
+# if other teams are interested in your notifications. Set to [] if you need
+# no Slack notifcations. (like, motd only or page only)
+# Defaults to nil, which uses ${team}-notifications default from the Slack handler.
 #
 # [*notification_email*]
 # A string for the mailto for emails for alerts. (paging and non-paging)
@@ -168,6 +174,7 @@ define monitoring_check (
   $team                  = 'operations',
   $page                  = false,
   $irc_channels          = undef,
+  $slack_channels        = undef,
   $notification_email    = 'undef',
   $ticket                = false,
   $project               = false,
@@ -238,6 +245,13 @@ define monitoring_check (
     $irc_channel_array = $team_hash[$team]['notifications_irc_channel']
   }
 
+  if $slack_channels != undef {
+    $slack_channel_array = any2array($slack_channels)
+  } else {
+    $slack_team_hash = $team_data
+    $slack_channel_array = $slack_team_hash[$team]['notifications_slack_channel']
+  }
+
   if str2bool($use_sensu) and $remediation_action != undef {
       include monitoring_check::remediation
 
@@ -272,6 +286,7 @@ define monitoring_check (
     sla                => $sla,
     team               => $team,
     irc_channels       => $irc_channel_array,
+    slack_channels     => $slack_channel_array,
     notification_email => $notification_email,
     ticket             => str2bool($ticket),
     project            => $project,

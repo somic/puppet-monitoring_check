@@ -118,7 +118,7 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
                   'handlers' => check['actual_handlers'],
                   'command' => check['actual_command'] }
     [ :dependencies, :interval, :alert_after, :realert_every,
-      :runbook, :sla, :team, :irc_channels, :notification_email,
+      :runbook, :sla, :team, :irc_channels, :slack_channels, :notification_email,
       :ticket, :page, :tip, :habitat, :tags, :timeout, :standalone,
     ].each do |k|
       new_event[k.to_s] = check[k.to_s]
@@ -126,6 +126,9 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
 
     # take irc_channels from team data
     new_event.delete('irc_channels') if check['with_team_data_irc_channels']
+
+    # take slack_channels from team data
+    new_event.delete('slack_channels') if check['with_team_data_slack_channels']
 
     if check['with_keepalive_team']
       team_override = get_client_keepalive_team(event[:sensu_client_name])
