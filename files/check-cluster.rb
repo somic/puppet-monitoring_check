@@ -245,12 +245,17 @@ private
   def check_aggregate(summary)
     total, ok, silenced, stale, failing = summary.values_at(:total, :ok, :silenced, :stale, :failing)
 
-    return :critical, 'No servers running the check, ignore_hohosts set to false' if !config[:ignore_nohosts]
-
-    return 'OK', 'No servers running the check' if total.zero?
-
     eff_total = total - silenced * (config[:silenced] ? 1 : 0)
-    return 'OK', 'All hosts silenced' if eff_total.zero?
+
+    if total.zero?
+      if !config[:ignore_nohosts]
+        return 'CRITICAL', 'No servers running the check, ignore_hohosts set to false'
+      else
+        return 'OK', 'No servers running the check'
+      end
+    elsif eff_total.zero?
+      return 'OK', 'All hosts silenced' if eff_total.zero?
+    end
 
     ok_pct  = (100 * ok / eff_total.to_f).to_i
 
