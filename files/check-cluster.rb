@@ -78,6 +78,13 @@ class CheckCluster < Sensu::Plugin::Check::CLI
     :description => "Don't fail if there are no hosts",
     :default => false
 
+  option :critical_when_nohosts,
+    :short => "-r",
+    :long => "--critical-when-nohosts",
+    :boolean => true,
+    :description => "If no hosts report individual checks, return CRITICAL.",
+    :default => false
+
   option :dryrun,
     :short => "-d",
     :long => "--dry-run",
@@ -248,13 +255,13 @@ private
     eff_total = total - silenced * (config[:silenced] ? 1 : 0)
 
     if total.zero?
-      if !config[:ignore_nohosts]
-        return 'CRITICAL', 'No servers running the check, ignore_hohosts set to false'
+      if config[:critical_when_nohosts]
+        return 'CRITICAL', 'No servers running the check, and --critical-when-nohosts has been set'
       else
         return 'OK', 'No servers running the check'
       end
     elsif eff_total.zero?
-      return 'OK', 'All hosts silenced' if eff_total.zero?
+      return 'OK', 'All hosts silenced'
     end
 
     ok_pct  = (100 * ok / eff_total.to_f).to_i
