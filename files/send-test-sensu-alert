@@ -13,7 +13,6 @@ cat <<EOF >"${TMPFILE}"
   "sla": "No SLA defined.",
   "dependencies": [],
   "team": "noop",
-  "irc_channels": [],
   "slack_channels": [],
   "notification_email": "${USER}@${DOMAIN}",
   "ticket": false,
