@@ -45,6 +45,7 @@ describe 'monitoring_check' do
             "runbook"            => "http://gronk",
             "sla"                => "No SLA defined.",
             "team"               => "operations",
+            "irc_channels"       => :undef,
             "slack_channels"     => :undef,
             "notification_email" => "undef",
             "ticket"             => false,
@@ -75,6 +76,7 @@ describe 'monitoring_check' do
             "runbook"            => "http://gronk",
             "sla"                => "No SLA defined.",
             "team"               => "operations",
+            "irc_channels"       => :undef,
             "slack_channels"     => :undef,
             "notification_email" => "undef",
             "ticket"             => false,
@@ -105,6 +107,7 @@ describe 'monitoring_check' do
             "runbook"            => "http://gronk",
             "sla"                => "No SLA defined.",
             "team"               => "operations",
+            "irc_channels"       => :undef,
             "slack_channels"     => :undef,
             "notification_email" => "undef",
             "ticket"             => false,
@@ -171,6 +174,7 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"            => "http://gronk",
         "ticket"             => false,
+        "irc_channels"       => :undef,
         "slack_channels"     => :undef,
         "tip"                => false,
         "project"            => false,
@@ -202,6 +206,7 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_custom({
           "runbook"            => "http://gronk",
           "ticket"             => false,
+          "irc_channels"       => :undef,
           "slack_channels"     => :undef,
           "tip"                => false,
           "project"            => false,
@@ -223,6 +228,7 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"            => "http://gronk",
         "ticket"             => false,
+        "irc_channels"       => :undef,
         "slack_channels"     => :undef,
         "tip"                => false,
         "project"            => false,
@@ -243,6 +249,7 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_custom({
           "runbook"            => "http://gronk",
           "ticket"             => false,
+          "irc_channels"       => :undef,
           "slack_channels"     => :undef,
           "tip"                => false,
           "project"            => false,
@@ -263,6 +270,7 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_custom({
           "runbook"            => "http://gronk",
           "ticket"             => false,
+          "irc_channels"       => :undef,
           "slack_channels"     => :undef,
           "tip"                => false,
           "project"            => false,
@@ -313,6 +321,7 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"            => "http://gronk",
         "ticket"             => false,
+        "irc_channels"       => :undef,
         "slack_channels"     => :undef,
         "tip"                => false,
         "project"            => false,
@@ -333,6 +342,7 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"            => "http://gronk",
         "ticket"             => false,
+        "irc_channels"       => :undef,
         "slack_channels"     => :undef,
         "tip"                => false,
         "project"            => false,
@@ -353,6 +363,7 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"            => "http://gronk",
         "ticket"             => false,
+        "irc_channels"       => :undef,
         "slack_channels"     => :undef,
         "tip"                => false,
         "project"            => false,
@@ -378,6 +389,7 @@ describe 'monitoring_check' do
       it { should contain_sensu__check('examplecheck').with_custom({
         "runbook"            => "http://gronk",
         "ticket"             => false,
+        "irc_channels"       => :undef,
         "slack_channels"     => :undef,
         "tip"                => false,
         "project"            => false,

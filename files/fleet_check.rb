@@ -118,11 +118,14 @@ class SensuFleetCheck < Sensu::Plugin::Check::CLI
                   'handlers' => check['actual_handlers'],
                   'command' => check['actual_command'] }
     [ :dependencies, :interval, :alert_after, :realert_every,
-      :runbook, :sla, :team, :slack_channels, :notification_email,
+      :runbook, :sla, :team, :irc_channels, :slack_channels, :notification_email,
       :ticket, :page, :tip, :habitat, :tags, :timeout, :standalone,
     ].each do |k|
       new_event[k.to_s] = check[k.to_s]
     end
+
+    # take irc_channels from team data
+    new_event.delete('irc_channels') if check['with_team_data_irc_channels']
 
     # take slack_channels from team data
     new_event.delete('slack_channels') if check['with_team_data_slack_channels']
