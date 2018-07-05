@@ -34,7 +34,7 @@
 # as failed. Defaults to the check_every frequency.
 #
 # [*alert_after*]
-# How long a check is allowed to be failing for before alerting (pagerduty/irc).
+# How long a check is allowed to be failing for before alerting (pagerduty/slack).
 # Can be an integer number of seconds, or an abbreviattion
 # Defaults to 0s, meaning sensu will alert as soon as the check fails.
 #
@@ -53,12 +53,6 @@
 # Every page also goes to a mandatory ${team}-pages, and is not configurable.
 # Defaults to false.
 #
-# [*irc_channels*]
-# Array of IRC channels to send notfications to. Set this to multiple channels
-# if other teams are interested in your notifications. Set to [] if you need
-# no IRC notifcations. (like, motd only or page only)
-# Defaults to nil, which uses ${team}-notifications default from the irc handler.
-
 # [*slack_channels*]
 # Array of Slack channels to send notfications to. Set this to multiple channels
 # if other teams are interested in your notifications. Set to [] if you need
@@ -89,7 +83,7 @@
 #
 # This is (currently) just a human readable string usable in handlers to give
 # more context about the urgency of an alert when you see it in a
-# ticket/page/email/irc.
+# ticket/page/email/slack.
 #
 # [*dependencies*]
 # A list of dependencies for this check to be escalated if it's critical.
@@ -173,7 +167,6 @@ define monitoring_check (
   $realert_every         = '-1',
   $team                  = 'operations',
   $page                  = false,
-  $irc_channels          = undef,
   $slack_channels        = undef,
   $notification_email    = 'undef',
   $ticket                = false,
@@ -238,13 +231,6 @@ define monitoring_check (
   }
 
   # TODO: Handle this logic at the handler level?
-  if $irc_channels != undef {
-    $irc_channel_array = any2array($irc_channels)
-  } else {
-    $team_hash = $team_data
-    $irc_channel_array = $team_hash[$team]['notifications_irc_channel']
-  }
-
   if $slack_channels != undef {
     $slack_channel_array = any2array($slack_channels)
   } else {
@@ -285,7 +271,6 @@ define monitoring_check (
     runbook            => $runbook,
     sla                => $sla,
     team               => $team,
-    irc_channels       => $irc_channel_array,
     slack_channels     => $slack_channel_array,
     notification_email => $notification_email,
     ticket             => str2bool($ticket),
